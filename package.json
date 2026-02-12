@@ -1,0 +1,17 @@
+{
+  "name": "train-ticket-scheduler",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "nuxt build",
+    "dev": "nuxt dev",
+    "generate": "nuxt generate",
+    "preview": "nuxt preview",
+    "postinstall": "nuxt prepare",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "wrangler d1 migrations apply train-ticket-scheduler-db --local"
+  },
+  "dependencies": {
+    "nuxt": "^3.16.0"
+  }
+}
