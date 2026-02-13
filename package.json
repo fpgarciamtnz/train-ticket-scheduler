@@ -10,7 +10,7 @@
     "postinstall": "nuxt prepare",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "wrangler d1 migrations apply train-ticket-scheduler-db --local",
-    "deploy": "nuxt build && wrangler pages deploy dist --project-name=train-ticket-scheduler"
+    "deploy": "nuxt build && wrangler d1 migrations apply train-ticket-scheduler-db --remote && wrangler pages deploy dist --project-name=train-ticket-scheduler"
   },
   "dependencies": {
     "@libsql/client": "^0.17.0",

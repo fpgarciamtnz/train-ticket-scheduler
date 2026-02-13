@@ -5,7 +5,9 @@
     {
       "binding": "DB",
       "database_name": "train-ticket-scheduler-db",
-      "database_id": "c95dce8c-dae0-4286-bcad-fa7bcd53d511"
+      "database_id": "c95dce8c-dae0-4286-bcad-fa7bcd53d511",
+      "migrations_dir": "server/db/migrations/sqlite",
+      "migrations_table": "_hub_migrations"
     }
   ]
 }
