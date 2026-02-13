@@ -6,6 +6,7 @@ const { attributes } = useCalendarAttributes()
   <ClientOnly>
     <VCalendar
       :attributes="attributes"
+      :is-dark="{ selector: 'html', darkClass: 'dark' }"
       expanded
       borderless
       transparent

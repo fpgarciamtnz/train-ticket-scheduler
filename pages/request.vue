@@ -58,13 +58,14 @@ async function submit() {
 
     <form v-else class="space-y-5" @submit.prevent="submit">
       <div>
-        <label class="block text-sm font-medium mb-2">Select a Date</label>
+        <label class="block text-sm font-medium mb-2 text-gray-900 dark:text-gray-100">Select a Date</label>
         <p class="text-xs text-gray-500 dark:text-gray-400 mb-2">Red dates are unavailable (owner is using the ticket)</p>
         <ClientOnly>
           <VDatePicker
             v-model="selectedDate"
             :disabled-dates="disabledDates"
             :min-date="new Date()"
+            :is-dark="{ selector: 'html', darkClass: 'dark' }"
             mode="date"
             expanded
           />
@@ -75,17 +76,17 @@ async function submit() {
       </div>
 
       <div>
-        <label class="block text-sm font-medium mb-1">Your Name *</label>
+        <label class="block text-sm font-medium mb-1 text-gray-900 dark:text-gray-100">Your Name *</label>
         <UInput v-model="requesterName" placeholder="Enter your name" required />
       </div>
 
       <div>
-        <label class="block text-sm font-medium mb-1">Contact Info *</label>
+        <label class="block text-sm font-medium mb-1 text-gray-900 dark:text-gray-100">Contact Info *</label>
         <UInput v-model="requesterContact" placeholder="Email or phone number" required />
       </div>
 
       <div>
-        <label class="block text-sm font-medium mb-1">Note (optional)</label>
+        <label class="block text-sm font-medium mb-1 text-gray-900 dark:text-gray-100">Note (optional)</label>
         <UTextarea v-model="note" placeholder="Any additional details about your request" />
       </div>
 

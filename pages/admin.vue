@@ -97,11 +97,12 @@ async function deleteRequest(id: number) {
         <template #schedule>
           <div class="space-y-6 pt-4">
             <div>
-              <h3 class="font-medium mb-2">Mark dates you're using the ticket</h3>
+              <h3 class="font-medium mb-2 text-gray-900 dark:text-gray-100">Mark dates you're using the ticket</h3>
               <ClientOnly>
                 <VDatePicker
                   v-model="selectedDates"
                   :min-date="new Date()"
+                  :is-dark="{ selector: 'html', darkClass: 'dark' }"
                   mode="date"
                   expanded
                 />
@@ -117,7 +118,7 @@ async function deleteRequest(id: number) {
             </div>
 
             <div>
-              <h3 class="font-medium mb-2">Your scheduled dates</h3>
+              <h3 class="font-medium mb-2 text-gray-900 dark:text-gray-100">Your scheduled dates</h3>
               <div v-if="schedule.ownerDates.length === 0" class="text-gray-500 dark:text-gray-400 text-sm">
                 No dates scheduled yet.
               </div>

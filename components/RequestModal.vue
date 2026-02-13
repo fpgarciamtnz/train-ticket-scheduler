@@ -59,29 +59,30 @@ async function submit() {
 
       <form class="space-y-4" @submit.prevent="submit">
         <div>
-          <label class="block text-sm font-medium mb-1">Select a Date</label>
+          <label class="block text-sm font-medium mb-1 text-gray-900 dark:text-gray-100">Select a Date</label>
           <ClientOnly>
             <VDatePicker
               v-model="selectedDate"
               :disabled-dates="disabledDates"
               :min-date="new Date()"
+              :is-dark="{ selector: 'html', darkClass: 'dark' }"
               mode="date"
             />
           </ClientOnly>
         </div>
 
         <div>
-          <label class="block text-sm font-medium mb-1">Your Name *</label>
+          <label class="block text-sm font-medium mb-1 text-gray-900 dark:text-gray-100">Your Name *</label>
           <UInput v-model="requesterName" placeholder="Enter your name" required />
         </div>
 
         <div>
-          <label class="block text-sm font-medium mb-1">Contact Info *</label>
+          <label class="block text-sm font-medium mb-1 text-gray-900 dark:text-gray-100">Contact Info *</label>
           <UInput v-model="requesterContact" placeholder="Email or phone" required />
         </div>
 
         <div>
-          <label class="block text-sm font-medium mb-1">Note (optional)</label>
+          <label class="block text-sm font-medium mb-1 text-gray-900 dark:text-gray-100">Note (optional)</label>
           <UTextarea v-model="note" placeholder="Any additional details" />
         </div>
 
