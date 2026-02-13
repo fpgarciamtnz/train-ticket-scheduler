@@ -13,7 +13,7 @@ const { attributes } = useCalendarAttributes()
     />
     <template #fallback>
       <div class="h-80 flex items-center justify-center">
-        <p class="text-gray-400">Loading calendar...</p>
+        <p class="text-gray-500 dark:text-gray-400">Loading calendar...</p>
       </div>
     </template>
   </ClientOnly>

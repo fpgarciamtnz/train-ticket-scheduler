@@ -28,15 +28,15 @@ const tabItems = [
 
 async function submitPin() {
   if (!pinInput.value) return
-  auth.login(pinInput.value)
-  try {
-    await Promise.all([schedule.fetchSchedules(), schedule.fetchRequests()])
-    pinError.value = ''
-  } catch {
-    auth.logout()
+  pinError.value = ''
+  const valid = await auth.verify(pinInput.value)
+  if (!valid) {
     pinError.value = 'Invalid PIN'
     pinInput.value = ''
+    return
   }
+  auth.login(pinInput.value)
+  await Promise.all([schedule.fetchSchedules(), schedule.fetchRequests()])
 }
 
 async function saveDates() {
@@ -118,7 +118,7 @@ async function deleteRequest(id: number) {
 
             <div>
               <h3 class="font-medium mb-2">Your scheduled dates</h3>
-              <div v-if="schedule.ownerDates.length === 0" class="text-gray-500 text-sm">
+              <div v-if="schedule.ownerDates.length === 0" class="text-gray-500 dark:text-gray-400 text-sm">
                 No dates scheduled yet.
               </div>
               <div v-else class="space-y-1">

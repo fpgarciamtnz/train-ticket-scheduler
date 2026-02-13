@@ -49,7 +49,7 @@ async function submit() {
     <div v-if="success" class="text-center space-y-4">
       <UIcon name="i-heroicons-check-circle" class="text-green-500 text-4xl" />
       <p class="text-lg font-medium">Request submitted!</p>
-      <p class="text-gray-500">The ticket owner will review your request.</p>
+      <p class="text-gray-500 dark:text-gray-400">The ticket owner will review your request.</p>
       <div class="flex gap-2 justify-center">
         <UButton label="Back to Calendar" to="/" variant="outline" />
         <UButton label="Submit Another" @click="success = false; selectedDate = null; requesterName = ''; requesterContact = ''; note = ''" />
@@ -59,7 +59,7 @@ async function submit() {
     <form v-else class="space-y-5" @submit.prevent="submit">
       <div>
         <label class="block text-sm font-medium mb-2">Select a Date</label>
-        <p class="text-xs text-gray-500 mb-2">Red dates are unavailable (owner is using the ticket)</p>
+        <p class="text-xs text-gray-500 dark:text-gray-400 mb-2">Red dates are unavailable (owner is using the ticket)</p>
         <ClientOnly>
           <VDatePicker
             v-model="selectedDate"

@@ -19,7 +19,7 @@ await useAsyncData('schedule', () => Promise.all([
       <CalendarView />
 
       <div class="space-y-3">
-        <h2 class="font-semibold text-sm uppercase tracking-wide text-gray-500">Legend</h2>
+        <h2 class="font-semibold text-sm uppercase tracking-wide text-gray-500 dark:text-gray-400">Legend</h2>
         <div class="space-y-2 text-sm">
           <div class="flex items-center gap-2">
             <span class="w-3 h-3 rounded-full bg-red-500" />
