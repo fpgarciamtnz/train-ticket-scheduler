@@ -1,0 +1,11 @@
+{
+  "name": "train-ticket-scheduler",
+  "compatibility_date": "2025-01-01",
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "train-ticket-scheduler-db",
+      "database_id": "c95dce8c-dae0-4286-bcad-fa7bcd53d511"
+    }
+  ]
+}

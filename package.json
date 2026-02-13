@@ -9,9 +9,34 @@
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
     "db:generate": "drizzle-kit generate",
-    "db:migrate": "wrangler d1 migrations apply train-ticket-scheduler-db --local"
+    "db:migrate": "wrangler d1 migrations apply train-ticket-scheduler-db --local",
+    "deploy": "nuxt build && wrangler pages deploy .output/public"
   },
   "dependencies": {
-    "nuxt": "^3.16.0"
+    "@libsql/client": "^0.17.0",
+    "@nuxt/icon": "^1.15.0",
+    "@nuxt/ui": "^2.22.3",
+    "@nuxthub/core": "^0.10.6",
+    "@pinia/nuxt": "^0.11.3",
+    "date-fns": "^4.1.0",
+    "drizzle-orm": "^0.45.1",
+    "nuxt": "^3.16.0",
+    "nuxt-auth-utils": "^0.5.28",
+    "pinia": "^3.0.4"
+  },
+  "devDependencies": {
+    "@samk-dev/nuxt-vcalendar": "^1.0.4",
+    "drizzle-kit": "^0.31.9",
+    "nitro-cloudflare-dev": "^0.2.2",
+    "wrangler": "^4.65.0"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "@parcel/watcher",
+      "esbuild",
+      "sharp",
+      "vue-demi",
+      "workerd"
+    ]
   }
 }
