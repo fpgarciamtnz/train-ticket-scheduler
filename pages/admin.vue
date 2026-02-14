@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { format } from 'date-fns'
+import { TIME_SLOTS, SLOT_LABELS, SLOT_ICONS, parseSlots, serializeSlots, type TimeSlot } from '~/utils/slots'
 
 const auth = useAuthStore()
 const schedule = useScheduleStore()
@@ -8,14 +8,17 @@ const pinInput = ref('')
 const pinError = ref('')
 
 // Schedule management
-const selectedDates = ref<Date[]>([])
-const savingDates = ref(false)
+const selectedDate = ref('')
+const selectedSlots = ref<TimeSlot[]>([])
+const savingSlots = ref(false)
 
 // Request management
 const columns = [
   { key: 'date', label: 'Date' },
   { key: 'requesterName', label: 'Name' },
   { key: 'requesterContact', label: 'Contact' },
+  { key: 'duration', label: 'Duration' },
+  { key: 'slots', label: 'Slots' },
   { key: 'status', label: 'Status' },
   { key: 'note', label: 'Note' },
   { key: 'actions', label: 'Actions' },
@@ -39,16 +42,41 @@ async function submitPin() {
   await Promise.all([schedule.fetchSchedules(), schedule.fetchRequests()])
 }
 
-async function saveDates() {
-  if (selectedDates.value.length === 0) return
-  savingDates.value = true
-  try {
-    const dates = selectedDates.value.map((d) => format(d, 'yyyy-MM-dd'))
-    await schedule.addOwnerDates(dates)
-    selectedDates.value = []
-  } finally {
-    savingDates.value = false
+function loadSlotsForDate() {
+  if (!selectedDate.value) {
+    selectedSlots.value = []
+    return
   }
+  selectedSlots.value = [...schedule.getOwnerSlotsForDate(selectedDate.value)]
+}
+
+watch(selectedDate, loadSlotsForDate)
+
+function toggleSlot(slot: TimeSlot) {
+  if (selectedSlots.value.includes(slot)) {
+    selectedSlots.value = selectedSlots.value.filter(s => s !== slot)
+  } else {
+    selectedSlots.value.push(slot)
+  }
+}
+
+async function saveSlots() {
+  if (!selectedDate.value || selectedSlots.value.length === 0) return
+  savingSlots.value = true
+  try {
+    await schedule.addOwnerDates([{
+      date: selectedDate.value,
+      slots: serializeSlots(selectedSlots.value),
+    }])
+  } finally {
+    savingSlots.value = false
+  }
+}
+
+async function clearDate() {
+  if (!selectedDate.value) return
+  await schedule.removeOwnerDate(selectedDate.value)
+  selectedSlots.value = []
 }
 
 async function removeDateEntry(date: string) {
@@ -65,6 +93,11 @@ async function rejectRequest(id: number) {
 
 async function deleteRequest(id: number) {
   await schedule.deleteRequest(id)
+}
+
+function formatSlotBadges(slots: string | null): string[] {
+  if (!slots) return ['Full day']
+  return parseSlots(slots).map(s => SLOT_LABELS[s].split(' (')[0])
 }
 </script>
 
@@ -96,27 +129,56 @@ async function deleteRequest(id: number) {
       <UTabs :items="tabItems">
         <template #schedule>
           <div class="space-y-6 pt-4">
+            <!-- Single date picker + slot checkboxes -->
             <div>
-              <h3 class="font-medium mb-2 text-gray-900 dark:text-gray-100">Mark dates you're using the ticket</h3>
-              <ClientOnly>
-                <VDatePicker
-                  v-model="selectedDates"
-                  :min-date="new Date()"
-                  :is-dark="{ selector: 'html', darkClass: 'dark' }"
-                  mode="date"
-                  expanded
-                />
-              </ClientOnly>
-              <div class="mt-3 flex gap-2">
-                <UButton
-                  label="Save Selected Dates"
-                  :loading="savingDates"
-                  :disabled="selectedDates.length === 0"
-                  @click="saveDates"
-                />
+              <h3 class="font-medium mb-2 text-gray-900 dark:text-gray-100">Select a date and choose which slots you're using</h3>
+              <div class="flex flex-col sm:flex-row gap-4">
+                <div>
+                  <label class="block text-sm font-medium mb-1 text-gray-900 dark:text-gray-100">Date</label>
+                  <UInput v-model="selectedDate" type="date" />
+                </div>
+              </div>
+
+              <div v-if="selectedDate" class="mt-4">
+                <p class="text-sm font-medium mb-2 text-gray-900 dark:text-gray-100">Time Slots</p>
+                <div class="space-y-1">
+                  <label
+                    v-for="slot in TIME_SLOTS"
+                    :key="slot"
+                    class="flex items-center gap-3 p-2 rounded-lg border cursor-pointer transition-colors"
+                    :class="selectedSlots.includes(slot)
+                      ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20'
+                      : 'border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800'"
+                    @click="toggleSlot(slot)"
+                  >
+                    <UCheckbox
+                      :model-value="selectedSlots.includes(slot)"
+                      @click.stop
+                      @change="toggleSlot(slot)"
+                    />
+                    <UIcon :name="SLOT_ICONS[slot]" class="w-5 h-5 text-gray-500 dark:text-gray-400" />
+                    <span class="text-sm text-gray-900 dark:text-gray-100">{{ SLOT_LABELS[slot] }}</span>
+                  </label>
+                </div>
+
+                <div class="mt-3 flex gap-2">
+                  <UButton
+                    label="Save Slots"
+                    :loading="savingSlots"
+                    :disabled="selectedSlots.length === 0"
+                    @click="saveSlots"
+                  />
+                  <UButton
+                    label="Clear All"
+                    color="red"
+                    variant="outline"
+                    @click="clearDate"
+                  />
+                </div>
               </div>
             </div>
 
+            <!-- Scheduled dates list -->
             <div>
               <h3 class="font-medium mb-2 text-gray-900 dark:text-gray-100">Your scheduled dates</h3>
               <div v-if="schedule.ownerDates.length === 0" class="text-gray-500 dark:text-gray-400 text-sm">
@@ -126,9 +188,22 @@ async function deleteRequest(id: number) {
                 <div
                   v-for="entry in schedule.ownerDates"
                   :key="entry.id"
-                  class="flex items-center justify-between py-1 px-2 rounded hover:bg-gray-100 dark:hover:bg-gray-800"
+                  class="flex items-center justify-between py-2 px-3 rounded hover:bg-gray-100 dark:hover:bg-gray-800"
                 >
-                  <span class="text-sm">{{ entry.date }}</span>
+                  <div class="flex items-center gap-3">
+                    <span class="text-sm font-mono text-gray-900 dark:text-gray-100">{{ entry.date }}</span>
+                    <div class="flex gap-1">
+                      <UBadge
+                        v-for="slot in parseSlots(entry.slots)"
+                        :key="slot"
+                        color="red"
+                        variant="subtle"
+                        size="xs"
+                      >
+                        {{ SLOT_LABELS[slot].split(' (')[0] }}
+                      </UBadge>
+                    </div>
+                  </div>
                   <UButton
                     icon="i-heroicons-trash"
                     color="red"
@@ -145,6 +220,22 @@ async function deleteRequest(id: number) {
         <template #requests>
           <div class="pt-4">
             <UTable :rows="schedule.requests" :columns="columns">
+              <template #duration-data="{ row }">
+                <UBadge color="gray" variant="subtle" size="sm">{{ row.duration || '8h' }}</UBadge>
+              </template>
+              <template #slots-data="{ row }">
+                <div class="flex flex-wrap gap-1">
+                  <UBadge
+                    v-for="s in formatSlotBadges(row.slots)"
+                    :key="s"
+                    color="blue"
+                    variant="subtle"
+                    size="xs"
+                  >
+                    {{ s }}
+                  </UBadge>
+                </div>
+              </template>
               <template #status-data="{ row }">
                 <StatusBadge :status="row.status" />
               </template>

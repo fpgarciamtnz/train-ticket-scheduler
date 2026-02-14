@@ -1,7 +1,10 @@
+import { parseSlots, getAvailableSlots, TIME_SLOTS, type TimeSlot, type Duration } from '~/utils/slots'
+
 interface Schedule {
   id: number
   date: string
   ownerStatus: string
+  slots: string
   createdAt: string
   updatedAt: string
 }
@@ -13,6 +16,8 @@ interface TicketRequest {
   requesterContact: string
   status: 'pending' | 'approved' | 'rejected'
   note: string | null
+  duration: string
+  slots: string | null
   createdAt: string
   updatedAt: string
 }
@@ -37,7 +42,7 @@ export const useScheduleStore = defineStore('schedule', () => {
     requests.value = await $fetch<TicketRequest[]>('/api/requests')
   }
 
-  async function addOwnerDates(dates: string[]) {
+  async function addOwnerDates(dates: Array<{ date: string, slots: string }>) {
     await $fetch('/api/schedule', {
       method: 'POST',
       body: { dates },
@@ -54,7 +59,14 @@ export const useScheduleStore = defineStore('schedule', () => {
     await fetchSchedules()
   }
 
-  async function submitRequest(data: { date: string; requesterName: string; requesterContact: string; note?: string }) {
+  async function submitRequest(data: {
+    date: string
+    requesterName: string
+    requesterContact: string
+    note?: string
+    duration?: Duration
+    slots?: string
+  }) {
     const result = await $fetch('/api/requests', {
       method: 'POST',
       body: data,
@@ -80,6 +92,18 @@ export const useScheduleStore = defineStore('schedule', () => {
     await fetchRequests()
   }
 
+  function getOwnerSlotsForDate(date: string): TimeSlot[] {
+    const schedule = ownerDates.value.find(s => s.date === date)
+    if (!schedule) return []
+    return parseSlots(schedule.slots)
+  }
+
+  function getAvailableSlotsForDate(date: string): TimeSlot[] {
+    const schedule = ownerDates.value.find(s => s.date === date)
+    if (!schedule) return [...TIME_SLOTS]
+    return getAvailableSlots(schedule.slots)
+  }
+
   return {
     ownerDates,
     requests,
@@ -94,5 +118,7 @@ export const useScheduleStore = defineStore('schedule', () => {
     submitRequest,
     updateRequestStatus,
     deleteRequest,
+    getOwnerSlotsForDate,
+    getAvailableSlotsForDate,
   }
 })
