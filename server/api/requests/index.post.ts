@@ -10,7 +10,6 @@ export default defineEventHandler(async (event) => {
     requesterContact: string
     note?: string
     duration?: string
-    slots?: string
   }>(event)
 
   if (!body.date || !body.requesterName || !body.requesterContact) {
@@ -22,24 +21,10 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, statusMessage: 'duration must be 4h, 8h, 12h, or 24h' })
   }
 
-  // Check for slot-level conflict
+  // Only block requests for fully-occupied dates (all 3 slots taken)
   const ownerDate = await db.select().from(schedules).where(eq(schedules.date, body.date)).get()
-  if (ownerDate) {
-    const ownerSlots = ownerDate.slots ? ownerDate.slots.split(',') : []
-    const requestedSlots = body.slots ? body.slots.split(',') : []
-
-    if (requestedSlots.length === 0) {
-      // No specific slots requested — any owner slot is a conflict
-      if (ownerSlots.length > 0) {
-        throw createError({ statusCode: 409, statusMessage: 'This date is not available — the owner is using the ticket' })
-      }
-    } else {
-      // Check if requested slots overlap with owner slots
-      const overlap = requestedSlots.filter(s => ownerSlots.includes(s))
-      if (overlap.length > 0) {
-        throw createError({ statusCode: 409, statusMessage: `Conflicting time slots: ${overlap.join(', ')}` })
-      }
-    }
+  if (ownerDate && ownerDate.slots === 'morning,midday,evening') {
+    throw createError({ statusCode: 409, statusMessage: 'This date is not available — the owner is using the ticket all day' })
   }
 
   const now = new Date().toISOString()
@@ -49,7 +34,7 @@ export default defineEventHandler(async (event) => {
     requesterContact: body.requesterContact,
     note: body.note ?? null,
     duration,
-    slots: body.slots || null,
+    slots: null,
     status: 'pending',
     createdAt: now,
     updatedAt: now,

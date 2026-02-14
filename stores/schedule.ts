@@ -65,7 +65,6 @@ export const useScheduleStore = defineStore('schedule', () => {
     requesterContact: string
     note?: string
     duration?: Duration
-    slots?: string
   }) {
     const result = await $fetch('/api/requests', {
       method: 'POST',
