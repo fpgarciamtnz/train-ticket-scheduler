@@ -100,6 +100,37 @@ async function syncFromPlanday() {
   }
 }
 
+// Settings
+const adminEmail = ref('')
+const settingsLoading = ref(false)
+const settingsSaved = ref(false)
+
+async function loadSettings() {
+  try {
+    const data = await $fetch<Record<string, string>>('/api/settings', {
+      headers: { 'x-admin-pin': auth.pin },
+    })
+    adminEmail.value = data.admin_email || ''
+  } catch {
+    // Settings may not exist yet
+  }
+}
+
+async function saveAdminEmail() {
+  settingsLoading.value = true
+  settingsSaved.value = false
+  try {
+    await $fetch('/api/settings', {
+      method: 'POST',
+      body: { key: 'admin_email', value: adminEmail.value },
+      headers: { 'x-admin-pin': auth.pin },
+    })
+    settingsSaved.value = true
+  } finally {
+    settingsLoading.value = false
+  }
+}
+
 // Request management
 const columns = [
   { key: 'date', label: 'Date' },
@@ -115,6 +146,7 @@ const columns = [
 const tabItems = [
   { label: 'Schedule', slot: 'schedule', icon: 'i-heroicons-calendar-days' },
   { label: 'Requests', slot: 'requests', icon: 'i-heroicons-inbox' },
+  { label: 'Settings', slot: 'settings', icon: 'i-heroicons-cog-6-tooth' },
 ]
 
 async function submitPin() {
@@ -127,7 +159,7 @@ async function submitPin() {
     return
   }
   auth.login(pinInput.value)
-  await Promise.all([schedule.fetchSchedules(), schedule.fetchRequests()])
+  await Promise.all([schedule.fetchSchedules(), schedule.fetchRequests(), loadSettings()])
   // Fire-and-forget auto-sync from Planday
   syncFromPlanday()
 }
@@ -434,6 +466,21 @@ async function deleteRequest(id: number) {
                 </div>
               </template>
             </UTable>
+          </div>
+        </template>
+
+        <template #settings>
+          <div class="pt-4 max-w-md space-y-4">
+            <h3 class="font-medium text-gray-900 dark:text-gray-100">Email Notifications</h3>
+            <div>
+              <label class="block text-sm font-medium mb-1 text-gray-900 dark:text-gray-100">Admin Email</label>
+              <p class="text-xs text-gray-500 dark:text-gray-400 mb-2">Receives notifications when new requests are submitted and reminders before approved requests.</p>
+              <div class="flex gap-2">
+                <UInput v-model="adminEmail" type="email" placeholder="admin@example.com" class="flex-1" />
+                <UButton label="Save" :loading="settingsLoading" @click="saveAdminEmail" />
+              </div>
+              <p v-if="settingsSaved" class="text-green-500 text-sm mt-1">Saved!</p>
+            </div>
           </div>
         </template>
       </UTabs>

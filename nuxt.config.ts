@@ -29,5 +29,7 @@ export default defineNuxtConfig({
     plandayClientId: '',
     plandayRefreshToken: '',
     plandayEmployeeId: '',
+    resendApiKey: '',
+    resendFromEmail: '',
   },
 })

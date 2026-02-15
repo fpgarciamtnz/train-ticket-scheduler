@@ -1,5 +1,5 @@
 import { eq } from 'drizzle-orm'
-import { schedules, requests } from '~~/server/db/schema'
+import { schedules, requests, settings } from '~~/server/db/schema'
 
 const VALID_DURATIONS = ['4h', '8h', '12h', '24h']
 
@@ -20,6 +20,7 @@ export default defineEventHandler(async (event) => {
     date: string
     requesterName: string
     requesterContact: string
+    requesterEmail?: string
     note?: string
     duration?: string
     startTime?: string
@@ -45,14 +46,43 @@ export default defineEventHandler(async (event) => {
     date: body.date,
     requesterName: body.requesterName,
     requesterContact: body.requesterContact,
+    requesterEmail: body.requesterEmail ?? null,
     note: body.note ?? null,
     duration,
     startTime: body.startTime ?? null,
     slots: null,
     status: 'pending',
+    reminderSent: 0,
     createdAt: now,
     updatedAt: now,
   }).returning()
+
+  // Send admin notification email (fire-and-forget)
+  try {
+    const adminEmailSetting = await db.select().from(settings).where(eq(settings.key, 'admin_email')).get()
+    if (adminEmailSetting?.value) {
+      const req = result[0]
+      await sendEmail(event, {
+        to: adminEmailSetting.value,
+        subject: `New ticket request from ${req.requesterName} for ${req.date}`,
+        html: `
+          <h2>New Ticket Request</h2>
+          <table style="border-collapse:collapse;">
+            <tr><td style="padding:4px 12px 4px 0;font-weight:bold;">Date</td><td>${req.date}</td></tr>
+            <tr><td style="padding:4px 12px 4px 0;font-weight:bold;">Name</td><td>${req.requesterName}</td></tr>
+            <tr><td style="padding:4px 12px 4px 0;font-weight:bold;">Contact</td><td>${req.requesterContact}</td></tr>
+            ${req.requesterEmail ? `<tr><td style="padding:4px 12px 4px 0;font-weight:bold;">Email</td><td>${req.requesterEmail}</td></tr>` : ''}
+            <tr><td style="padding:4px 12px 4px 0;font-weight:bold;">Duration</td><td>${req.duration}</td></tr>
+            ${req.startTime ? `<tr><td style="padding:4px 12px 4px 0;font-weight:bold;">Start Time</td><td>${req.startTime}</td></tr>` : ''}
+            ${req.note ? `<tr><td style="padding:4px 12px 4px 0;font-weight:bold;">Note</td><td>${req.note}</td></tr>` : ''}
+          </table>
+          <p style="margin-top:16px;color:#666;">Log in to the admin panel to review this request.</p>
+        `,
+      })
+    }
+  } catch {
+    // Email failure should not break the request submission
+  }
 
   return result[0]
 })

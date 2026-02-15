@@ -1,0 +1,8 @@
+{
+  "name": "train-ticket-reminder",
+  "private": true,
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20260212.0",
+    "wrangler": "^4.65.0"
+  }
+}

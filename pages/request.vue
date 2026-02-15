@@ -8,6 +8,7 @@ await useAsyncData('schedule-for-request', () => schedule.fetchSchedules())
 
 const selectedDate = ref<Date | null>(null)
 const requesterName = ref('')
+const requesterEmail = ref('')
 const requesterContact = ref('')
 const note = ref('')
 const duration = ref<Duration>('8h')
@@ -35,6 +36,7 @@ async function submit() {
     await schedule.submitRequest({
       date: format(selectedDate.value, 'yyyy-MM-dd'),
       requesterName: requesterName.value,
+      requesterEmail: requesterEmail.value || undefined,
       requesterContact: requesterContact.value,
       note: note.value || undefined,
       duration: duration.value,
@@ -52,6 +54,7 @@ function resetForm() {
   success.value = false
   selectedDate.value = null
   requesterName.value = ''
+  requesterEmail.value = ''
   requesterContact.value = ''
   note.value = ''
   duration.value = '8h'
@@ -117,6 +120,12 @@ function resetForm() {
       <div>
         <label class="block text-sm font-medium mb-1 text-gray-900 dark:text-gray-100">Your Name *</label>
         <UInput v-model="requesterName" placeholder="Enter your name" required />
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium mb-1 text-gray-900 dark:text-gray-100">Email (optional, for reminders)</label>
+        <UInput v-model="requesterEmail" type="email" placeholder="you@example.com" />
+        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">We'll send you a reminder 1h before your approved request.</p>
       </div>
 
       <div>

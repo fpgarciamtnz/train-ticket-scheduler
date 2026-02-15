@@ -17,11 +17,13 @@ interface TicketRequest {
   date: string
   requesterName: string
   requesterContact: string
+  requesterEmail: string | null
   status: 'pending' | 'approved' | 'rejected'
   note: string | null
   duration: string
   startTime: string | null
   slots: string | null
+  reminderSent: number
   createdAt: string
   updatedAt: string
 }
@@ -76,6 +78,7 @@ export const useScheduleStore = defineStore('schedule', () => {
     date: string
     requesterName: string
     requesterContact: string
+    requesterEmail?: string
     note?: string
     duration?: Duration
     startTime?: string
