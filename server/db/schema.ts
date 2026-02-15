@@ -5,6 +5,8 @@ export const schedules = sqliteTable('schedules', {
   date: text('date').notNull().unique(), // YYYY-MM-DD
   ownerStatus: text('owner_status', { enum: ['using'] }).notNull().default('using'),
   slots: text('slots').notNull().default('morning,midday,evening'),
+  startTime: text('start_time').notNull().default('06:00'),
+  endTime: text('end_time').notNull().default('24:00'),
   createdAt: text('created_at').notNull().$defaultFn(() => new Date().toISOString()),
   updatedAt: text('updated_at').notNull().$defaultFn(() => new Date().toISOString()),
 })

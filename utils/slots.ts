@@ -34,3 +34,33 @@ export function getAvailableSlots(ownerSlotsCsv: string | null | undefined): Tim
   const ownerSlots = parseSlots(ownerSlotsCsv)
   return TIME_SLOTS.filter(s => !ownerSlots.includes(s)) as TimeSlot[]
 }
+
+// --- Time-range helpers ---
+
+/** Convert "HH:mm" → total minutes since midnight */
+export function timeToMinutes(hhmm: string): number {
+  const [h, m] = hhmm.split(':').map(Number)
+  return h * 60 + (m || 0)
+}
+
+/** Format "HH:mm" → "7:30 AM" */
+export function formatTime(hhmm: string): string {
+  const [h, m] = hhmm.split(':').map(Number)
+  if (h === 24 && m === 0) return '12:00 AM'
+  const suffix = h >= 12 && h < 24 ? 'PM' : 'AM'
+  const h12 = h === 0 ? 12 : h > 12 ? h - 12 : h
+  return `${h12}:${String(m || 0).padStart(2, '0')} ${suffix}`
+}
+
+/** Format a start/end pair → "7:00 AM - 3:00 PM" */
+export function formatTimeRange(start: string, end: string): string {
+  return `${formatTime(start)} - ${formatTime(end)}`
+}
+
+/** Does this range cover the entire day? (06:00–24:00 or 00:00–24:00) */
+export function isFullDay(start: string | null | undefined, end: string | null | undefined): boolean {
+  if (!start || !end) return false
+  const s = timeToMinutes(start)
+  const e = timeToMinutes(end)
+  return s <= 360 && e >= 1440 // starts at-or-before 6:00 and ends at-or-after 24:00
+}

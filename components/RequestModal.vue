@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { format } from 'date-fns'
-import { DURATION_OPTIONS, type Duration } from '~/utils/slots'
+import { isFullDay, DURATION_OPTIONS, type Duration } from '~/utils/slots'
 
 const modelValue = defineModel<boolean>({ default: false })
 
@@ -21,7 +21,7 @@ const error = ref('')
 
 const disabledDates = computed(() =>
   schedule.ownerDates
-    .filter(d => d.slots === 'morning,midday,evening')
+    .filter(d => isFullDay(d.startTime, d.endTime))
     .map((d) => new Date(d.date + 'T00:00:00')),
 )
 

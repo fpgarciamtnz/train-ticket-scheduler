@@ -34,7 +34,7 @@ function onDayClick(day: any) {
     </ClientOnly>
 
     <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">
-      Click a date to see morning/midday/evening availability
+      Click a date to see time-range availability
     </p>
 
     <div v-if="selectedDate" class="mt-4">

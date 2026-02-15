@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { TIME_SLOTS, SLOT_LABELS, SLOT_ICONS, parseSlots, serializeSlots, type TimeSlot } from '~/utils/slots'
+import { format } from 'date-fns'
+import { formatTimeRange, isFullDay } from '~/utils/slots'
 
 const auth = useAuthStore()
 const schedule = useScheduleStore()
@@ -7,10 +8,12 @@ const schedule = useScheduleStore()
 const pinInput = ref('')
 const pinError = ref('')
 
-// Schedule management
-const selectedDate = ref('')
-const selectedSlots = ref<TimeSlot[]>([])
-const savingSlots = ref(false)
+// Schedule management — multi-date calendar selection
+const selectedDates = ref<Set<string>>(new Set())
+const startTime = ref('06:00')
+const endTime = ref('24:00')
+const fullDay = ref(true)
+const saving = ref(false)
 
 // Request management
 const columns = [
@@ -19,7 +22,6 @@ const columns = [
   { key: 'requesterContact', label: 'Contact' },
   { key: 'duration', label: 'Duration' },
   { key: 'startTime', label: 'Start Time' },
-  { key: 'slots', label: 'Slots' },
   { key: 'status', label: 'Status' },
   { key: 'note', label: 'Note' },
   { key: 'actions', label: 'Actions' },
@@ -43,41 +45,77 @@ async function submitPin() {
   await Promise.all([schedule.fetchSchedules(), schedule.fetchRequests()])
 }
 
-function loadSlotsForDate() {
-  if (!selectedDate.value) {
-    selectedSlots.value = []
-    return
+// Calendar attributes: blue for selected (unsaved), red for saved
+const calendarAttributes = computed(() => {
+  const attrs: any[] = []
+
+  // Blue highlight for currently-selected unsaved dates
+  for (const dateStr of selectedDates.value) {
+    attrs.push({
+      key: `selected-${dateStr}`,
+      highlight: { color: 'blue', fillMode: 'solid' },
+      dates: new Date(dateStr + 'T00:00:00'),
+    })
   }
-  selectedSlots.value = [...schedule.getOwnerSlotsForDate(selectedDate.value)]
-}
 
-watch(selectedDate, loadSlotsForDate)
+  // Red highlight for already-saved schedule dates
+  for (const s of schedule.ownerDates) {
+    // Don't show red if it's also selected (blue takes priority)
+    if (selectedDates.value.has(s.date)) continue
+    const full = isFullDay(s.startTime, s.endTime)
+    attrs.push({
+      key: `owner-${s.date}`,
+      highlight: { color: 'red', fillMode: full ? 'solid' : 'light' },
+      dates: new Date(s.date + 'T00:00:00'),
+    })
+  }
 
-function toggleSlot(slot: TimeSlot) {
-  if (selectedSlots.value.includes(slot)) {
-    selectedSlots.value = selectedSlots.value.filter(s => s !== slot)
+  // Green outline = today
+  attrs.push({
+    key: 'today',
+    highlight: { color: 'green', fillMode: 'outline' },
+    dates: new Date(),
+  })
+
+  return attrs
+})
+
+function onDayClick(day: any) {
+  const dateStr = format(day.date, 'yyyy-MM-dd')
+  const next = new Set(selectedDates.value)
+  if (next.has(dateStr)) {
+    next.delete(dateStr)
   } else {
-    selectedSlots.value.push(slot)
+    next.add(dateStr)
   }
+  selectedDates.value = next
 }
 
-async function saveSlots() {
-  if (!selectedDate.value || selectedSlots.value.length === 0) return
-  savingSlots.value = true
+watch(fullDay, (val) => {
+  if (val) {
+    startTime.value = '06:00'
+    endTime.value = '24:00'
+  }
+})
+
+watch([startTime, endTime], () => {
+  fullDay.value = isFullDay(startTime.value, endTime.value)
+})
+
+async function saveForSelectedDates() {
+  if (selectedDates.value.size === 0) return
+  saving.value = true
   try {
-    await schedule.addOwnerDates([{
-      date: selectedDate.value,
-      slots: serializeSlots(selectedSlots.value),
-    }])
+    const dates = [...selectedDates.value].map(date => ({
+      date,
+      startTime: startTime.value,
+      endTime: endTime.value,
+    }))
+    await schedule.addOwnerDates(dates)
+    selectedDates.value = new Set()
   } finally {
-    savingSlots.value = false
+    saving.value = false
   }
-}
-
-async function clearDate() {
-  if (!selectedDate.value) return
-  await schedule.removeOwnerDate(selectedDate.value)
-  selectedSlots.value = []
 }
 
 async function removeDateEntry(date: string) {
@@ -94,11 +132,6 @@ async function rejectRequest(id: number) {
 
 async function deleteRequest(id: number) {
   await schedule.deleteRequest(id)
-}
-
-function formatSlotBadges(slots: string | null): string[] {
-  if (!slots) return ['Full day']
-  return parseSlots(slots).map(s => SLOT_LABELS[s].split(' (')[0])
 }
 </script>
 
@@ -130,52 +163,56 @@ function formatSlotBadges(slots: string | null): string[] {
       <UTabs :items="tabItems">
         <template #schedule>
           <div class="space-y-6 pt-4">
-            <!-- Single date picker + slot checkboxes -->
+            <!-- Calendar for multi-date selection -->
             <div>
-              <h3 class="font-medium mb-2 text-gray-900 dark:text-gray-100">Select a date and choose which slots you're using</h3>
-              <div class="flex flex-col sm:flex-row gap-4">
+              <h3 class="font-medium mb-2 text-gray-900 dark:text-gray-100">Click dates on the calendar to select them</h3>
+              <ClientOnly>
+                <VCalendar
+                  :attributes="calendarAttributes"
+                  :is-dark="{ selector: 'html', darkClass: 'dark' }"
+                  expanded
+                  borderless
+                  transparent
+                  title-position="left"
+                  @dayclick="onDayClick"
+                />
+                <template #fallback>
+                  <div class="h-80 flex items-center justify-center">
+                    <p class="text-gray-500 dark:text-gray-400">Loading calendar...</p>
+                  </div>
+                </template>
+              </ClientOnly>
+              <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                Blue = selected (unsaved) &middot; Red = already scheduled
+              </p>
+            </div>
+
+            <!-- Time range pickers -->
+            <div>
+              <h3 class="font-medium mb-2 text-gray-900 dark:text-gray-100">Time range for selected dates</h3>
+
+              <div class="flex items-center gap-2 mb-3">
+                <UCheckbox v-model="fullDay" label="Full day (6:00 AM - 12:00 AM)" />
+              </div>
+
+              <div v-if="!fullDay" class="flex flex-col sm:flex-row gap-4">
                 <div>
-                  <label class="block text-sm font-medium mb-1 text-gray-900 dark:text-gray-100">Date</label>
-                  <UInput v-model="selectedDate" type="date" />
+                  <label class="block text-sm font-medium mb-1 text-gray-900 dark:text-gray-100">Start Time</label>
+                  <UInput v-model="startTime" type="time" />
+                </div>
+                <div>
+                  <label class="block text-sm font-medium mb-1 text-gray-900 dark:text-gray-100">End Time</label>
+                  <UInput v-model="endTime" type="time" />
                 </div>
               </div>
 
-              <div v-if="selectedDate" class="mt-4">
-                <p class="text-sm font-medium mb-2 text-gray-900 dark:text-gray-100">Time Slots</p>
-                <div class="space-y-1">
-                  <label
-                    v-for="slot in TIME_SLOTS"
-                    :key="slot"
-                    class="flex items-center gap-3 p-2 rounded-lg border cursor-pointer transition-colors"
-                    :class="selectedSlots.includes(slot)
-                      ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20'
-                      : 'border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800'"
-                    @click="toggleSlot(slot)"
-                  >
-                    <UCheckbox
-                      :model-value="selectedSlots.includes(slot)"
-                      @click.stop
-                      @change="toggleSlot(slot)"
-                    />
-                    <UIcon :name="SLOT_ICONS[slot]" class="w-5 h-5 text-gray-500 dark:text-gray-400" />
-                    <span class="text-sm text-gray-900 dark:text-gray-100">{{ SLOT_LABELS[slot] }}</span>
-                  </label>
-                </div>
-
-                <div class="mt-3 flex gap-2">
-                  <UButton
-                    label="Save Slots"
-                    :loading="savingSlots"
-                    :disabled="selectedSlots.length === 0"
-                    @click="saveSlots"
-                  />
-                  <UButton
-                    label="Clear All"
-                    color="red"
-                    variant="outline"
-                    @click="clearDate"
-                  />
-                </div>
+              <div class="mt-3">
+                <UButton
+                  :label="`Save for ${selectedDates.size} selected date${selectedDates.size === 1 ? '' : 's'}`"
+                  :loading="saving"
+                  :disabled="selectedDates.size === 0"
+                  @click="saveForSelectedDates"
+                />
               </div>
             </div>
 
@@ -193,17 +230,9 @@ function formatSlotBadges(slots: string | null): string[] {
                 >
                   <div class="flex items-center gap-3">
                     <span class="text-sm font-mono text-gray-900 dark:text-gray-100">{{ entry.date }}</span>
-                    <div class="flex gap-1">
-                      <UBadge
-                        v-for="slot in parseSlots(entry.slots)"
-                        :key="slot"
-                        color="red"
-                        variant="subtle"
-                        size="xs"
-                      >
-                        {{ SLOT_LABELS[slot].split(' (')[0] }}
-                      </UBadge>
-                    </div>
+                    <UBadge color="red" variant="subtle" size="xs">
+                      {{ formatTimeRange(entry.startTime, entry.endTime) }}
+                    </UBadge>
                   </div>
                   <UButton
                     icon="i-heroicons-trash"
@@ -226,19 +255,6 @@ function formatSlotBadges(slots: string | null): string[] {
               </template>
               <template #startTime-data="{ row }">
                 <span class="text-sm">{{ row.startTime || '—' }}</span>
-              </template>
-              <template #slots-data="{ row }">
-                <div class="flex flex-wrap gap-1">
-                  <UBadge
-                    v-for="s in formatSlotBadges(row.slots)"
-                    :key="s"
-                    color="blue"
-                    variant="subtle"
-                    size="xs"
-                  >
-                    {{ s }}
-                  </UBadge>
-                </div>
               </template>
               <template #status-data="{ row }">
                 <StatusBadge :status="row.status" />

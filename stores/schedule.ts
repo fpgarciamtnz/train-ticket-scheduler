@@ -1,10 +1,12 @@
-import { parseSlots, getAvailableSlots, TIME_SLOTS, type TimeSlot, type Duration } from '~/utils/slots'
+import { isFullDay, type Duration } from '~/utils/slots'
 
 interface Schedule {
   id: number
   date: string
   ownerStatus: string
   slots: string
+  startTime: string
+  endTime: string
   createdAt: string
   updatedAt: string
 }
@@ -43,7 +45,7 @@ export const useScheduleStore = defineStore('schedule', () => {
     requests.value = await $fetch<TicketRequest[]>('/api/requests')
   }
 
-  async function addOwnerDates(dates: Array<{ date: string, slots: string }>) {
+  async function addOwnerDates(dates: Array<{ date: string, startTime: string, endTime: string }>) {
     await $fetch('/api/schedule', {
       method: 'POST',
       body: { dates },
@@ -93,16 +95,16 @@ export const useScheduleStore = defineStore('schedule', () => {
     await fetchRequests()
   }
 
-  function getOwnerSlotsForDate(date: string): TimeSlot[] {
+  function getOwnerTimeRange(date: string): { startTime: string, endTime: string } | null {
     const schedule = ownerDates.value.find(s => s.date === date)
-    if (!schedule) return []
-    return parseSlots(schedule.slots)
+    if (!schedule) return null
+    return { startTime: schedule.startTime, endTime: schedule.endTime }
   }
 
-  function getAvailableSlotsForDate(date: string): TimeSlot[] {
+  function isDateFullyOccupied(date: string): boolean {
     const schedule = ownerDates.value.find(s => s.date === date)
-    if (!schedule) return [...TIME_SLOTS]
-    return getAvailableSlots(schedule.slots)
+    if (!schedule) return false
+    return isFullDay(schedule.startTime, schedule.endTime)
   }
 
   return {
@@ -119,7 +121,7 @@ export const useScheduleStore = defineStore('schedule', () => {
     submitRequest,
     updateRequestStatus,
     deleteRequest,
-    getOwnerSlotsForDate,
-    getAvailableSlotsForDate,
+    getOwnerTimeRange,
+    isDateFullyOccupied,
   }
 })

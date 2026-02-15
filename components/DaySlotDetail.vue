@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { format } from 'date-fns'
-import { TIME_SLOTS, SLOT_LABELS, SLOT_ICONS, DURATION_OPTIONS, type TimeSlot, type Duration } from '~/utils/slots'
+import { formatTime, formatTimeRange, isFullDay, DURATION_OPTIONS, type Duration } from '~/utils/slots'
 
 const props = defineProps<{
   date: string
@@ -12,31 +12,9 @@ const emit = defineEmits<{
 
 const schedule = useScheduleStore()
 
-const ownerSlots = computed(() => schedule.getOwnerSlotsForDate(props.date))
+const ownerRange = computed(() => schedule.getOwnerTimeRange(props.date))
 
-const hasAvailableSlot = computed(() => ownerSlots.value.length < TIME_SLOTS.length)
-
-function getSlotStatus(slot: TimeSlot) {
-  if (ownerSlots.value.includes(slot)) {
-    return { label: 'Owner using', color: 'red' }
-  }
-
-  const pending = schedule.pendingRequests.find(
-    r => r.date === props.date && r.slots?.split(',').includes(slot),
-  )
-  if (pending) {
-    return { label: 'Pending', color: 'yellow' }
-  }
-
-  const approved = schedule.approvedRequests.find(
-    r => r.date === props.date && r.slots?.split(',').includes(slot),
-  )
-  if (approved) {
-    return { label: 'Approved', color: 'blue' }
-  }
-
-  return { label: 'Available', color: 'green' }
-}
+const isFullyOccupied = computed(() => schedule.isDateFullyOccupied(props.date))
 
 const formattedDate = computed(() => {
   return format(new Date(props.date + 'T00:00:00'), 'EEEE, MMMM d, yyyy')
@@ -108,24 +86,48 @@ async function submit() {
     </template>
 
     <div class="space-y-2">
-      <div
-        v-for="slot in TIME_SLOTS"
-        :key="slot"
-        class="flex items-center justify-between p-3 rounded-lg"
-        :class="{
-          'bg-red-50 dark:bg-red-950/30': getSlotStatus(slot).color === 'red',
-          'bg-yellow-50 dark:bg-yellow-950/30': getSlotStatus(slot).color === 'yellow',
-          'bg-blue-50 dark:bg-blue-950/30': getSlotStatus(slot).color === 'blue',
-          'bg-green-50 dark:bg-green-950/30': getSlotStatus(slot).color === 'green',
-        }"
-      >
+      <!-- Owner time range -->
+      <div v-if="ownerRange" class="flex items-center justify-between p-3 rounded-lg bg-red-50 dark:bg-red-950/30">
         <div class="flex items-center gap-3">
-          <UIcon :name="SLOT_ICONS[slot]" class="w-5 h-5 text-gray-500 dark:text-gray-400" />
-          <span class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ SLOT_LABELS[slot] }}</span>
+          <UIcon name="i-heroicons-clock" class="w-5 h-5 text-red-500" />
+          <span class="text-sm font-medium text-gray-900 dark:text-gray-100">
+            Owner using: {{ formatTimeRange(ownerRange.startTime, ownerRange.endTime) }}
+          </span>
         </div>
-        <UBadge :color="getSlotStatus(slot).color" variant="subtle" size="sm">
-          {{ getSlotStatus(slot).label }}
-        </UBadge>
+        <UBadge color="red" variant="subtle" size="sm">Occupied</UBadge>
+      </div>
+
+      <!-- Available windows (complement of owner range) -->
+      <template v-if="ownerRange && !isFullyOccupied">
+        <div v-if="ownerRange.startTime > '00:00'" class="flex items-center justify-between p-3 rounded-lg bg-green-50 dark:bg-green-950/30">
+          <div class="flex items-center gap-3">
+            <UIcon name="i-heroicons-clock" class="w-5 h-5 text-green-500" />
+            <span class="text-sm font-medium text-gray-900 dark:text-gray-100">
+              Available: {{ formatTime('00:00') }} - {{ formatTime(ownerRange.startTime) }}
+            </span>
+          </div>
+          <UBadge color="green" variant="subtle" size="sm">Open</UBadge>
+        </div>
+        <div v-if="ownerRange.endTime < '24:00'" class="flex items-center justify-between p-3 rounded-lg bg-green-50 dark:bg-green-950/30">
+          <div class="flex items-center gap-3">
+            <UIcon name="i-heroicons-clock" class="w-5 h-5 text-green-500" />
+            <span class="text-sm font-medium text-gray-900 dark:text-gray-100">
+              Available: {{ formatTime(ownerRange.endTime) }} - {{ formatTime('24:00') }}
+            </span>
+          </div>
+          <UBadge color="green" variant="subtle" size="sm">Open</UBadge>
+        </div>
+      </template>
+
+      <!-- No schedule — fully open -->
+      <div v-if="!ownerRange" class="flex items-center justify-between p-3 rounded-lg bg-green-50 dark:bg-green-950/30">
+        <div class="flex items-center gap-3">
+          <UIcon name="i-heroicons-clock" class="w-5 h-5 text-green-500" />
+          <span class="text-sm font-medium text-gray-900 dark:text-gray-100">
+            Available: All day
+          </span>
+        </div>
+        <UBadge color="green" variant="subtle" size="sm">Open</UBadge>
       </div>
     </div>
 
@@ -136,7 +138,7 @@ async function submit() {
     </div>
 
     <!-- Request button / form -->
-    <div v-if="hasAvailableSlot && !success" class="mt-4">
+    <div v-if="!isFullyOccupied && !success" class="mt-4">
       <UButton
         v-if="!showForm"
         label="Request this Date"

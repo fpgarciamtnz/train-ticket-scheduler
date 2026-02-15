@@ -1,4 +1,4 @@
-import { parseSlots } from '~/utils/slots'
+import { isFullDay } from '~/utils/slots'
 
 export function useCalendarAttributes() {
   const schedule = useScheduleStore()
@@ -7,14 +7,13 @@ export function useCalendarAttributes() {
     const attrs: any[] = []
 
     for (const s of schedule.ownerDates) {
-      const slots = parseSlots(s.slots)
-      const isFullDay = slots.length === 3
+      const full = isFullDay(s.startTime, s.endTime)
 
       attrs.push({
         key: `owner-${s.date}`,
         highlight: {
           color: 'red',
-          fillMode: isFullDay ? 'solid' : 'light',
+          fillMode: full ? 'solid' : 'light',
         },
         dates: new Date(s.date + 'T00:00:00'),
       })

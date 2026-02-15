@@ -42,7 +42,7 @@ await useAsyncData('schedule', () => Promise.all([
             <span>Today</span>
           </div>
         </div>
-        <p class="text-xs text-gray-500 dark:text-gray-400 mt-3">Click a date to see morning/midday/evening availability</p>
+        <p class="text-xs text-gray-500 dark:text-gray-400 mt-3">Click a date to see time-range availability</p>
       </div>
     </div>
 
