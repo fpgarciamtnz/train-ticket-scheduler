@@ -1,7 +1,7 @@
 import { eq } from 'drizzle-orm'
 import { schedules } from '~~/server/db/schema'
 
-const TIME_RE = /^([01]\d|2[0-4]):[0-5]\d$/
+const TIME_RE = /^([01]\d|2[0-4]):00$/
 
 export default defineEventHandler(async (event) => {
   requireAdmin(event)

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { format } from 'date-fns'
-import { formatTimeRange, isFullDay } from '~/utils/slots'
+import { formatTime, formatTimeRange, isFullDay } from '~/utils/slots'
 
 const auth = useAuthStore()
 const schedule = useScheduleStore()
@@ -76,6 +76,12 @@ function deletePreset(index: number) {
   presets.value.splice(index, 1)
   savePresets()
 }
+
+// Hour-only options for time dropdowns (0:00 – 24:00)
+const HOUR_OPTIONS = Array.from({ length: 25 }, (_, i) => {
+  const value = `${String(i).padStart(2, '0')}:00`
+  return { label: formatTime(value), value }
+})
 
 // Request management
 const columns = [
@@ -256,7 +262,7 @@ async function deleteRequest(id: number) {
               <h3 class="font-medium mb-2 text-gray-900 dark:text-gray-100">Time range for selected dates</h3>
 
               <div class="flex items-center gap-2 mb-3">
-                <UCheckbox v-model="fullDay" label="Full day (6:00 AM - 12:00 AM)" />
+                <UCheckbox v-model="fullDay" label="Full day (6 AM - 12 AM)" />
               </div>
 
               <!-- Preset chips -->
@@ -281,11 +287,11 @@ async function deleteRequest(id: number) {
               <div v-if="!fullDay" class="flex flex-col sm:flex-row gap-4">
                 <div>
                   <label class="block text-sm font-medium mb-1 text-gray-900 dark:text-gray-100">Start Time</label>
-                  <UInput v-model="startTime" type="time" />
+                  <USelect v-model="startTime" :options="HOUR_OPTIONS" />
                 </div>
                 <div>
                   <label class="block text-sm font-medium mb-1 text-gray-900 dark:text-gray-100">End Time</label>
-                  <UInput v-model="endTime" type="time" />
+                  <USelect v-model="endTime" :options="HOUR_OPTIONS" />
                 </div>
               </div>
 

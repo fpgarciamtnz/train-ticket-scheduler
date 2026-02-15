@@ -43,16 +43,16 @@ export function timeToMinutes(hhmm: string): number {
   return h * 60 + (m || 0)
 }
 
-/** Format "HH:mm" → "7:30 AM" */
+/** Format "HH:mm" → "6 AM" (hours only, no minutes) */
 export function formatTime(hhmm: string): string {
   const [h, m] = hhmm.split(':').map(Number)
-  if (h === 24 && m === 0) return '12:00 AM'
+  if (h === 24 && m === 0) return '12 AM'
   const suffix = h >= 12 && h < 24 ? 'PM' : 'AM'
   const h12 = h === 0 ? 12 : h > 12 ? h - 12 : h
-  return `${h12}:${String(m || 0).padStart(2, '0')} ${suffix}`
+  return `${h12} ${suffix}`
 }
 
-/** Format a start/end pair → "7:00 AM - 3:00 PM" */
+/** Format a start/end pair → "6 AM - 12 PM" */
 export function formatTimeRange(start: string, end: string): string {
   return `${formatTime(start)} - ${formatTime(end)}`
 }
