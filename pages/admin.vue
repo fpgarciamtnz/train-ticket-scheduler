@@ -15,6 +15,67 @@ const endTime = ref('24:00')
 const fullDay = ref(true)
 const saving = ref(false)
 
+// --- Preset time ranges (localStorage-backed) ---
+interface TimePreset {
+  label: string
+  startTime: string
+  endTime: string
+}
+
+const PRESETS_KEY = 'schedule-presets'
+const DEFAULT_PRESETS: TimePreset[] = [
+  { label: 'Full day', startTime: '06:00', endTime: '24:00' },
+  { label: 'Morning', startTime: '06:00', endTime: '12:00' },
+  { label: 'Afternoon', startTime: '12:00', endTime: '18:00' },
+]
+
+function loadPresets(): TimePreset[] {
+  try {
+    const raw = localStorage.getItem(PRESETS_KEY)
+    if (!raw) return []
+    return JSON.parse(raw)
+  } catch {
+    return []
+  }
+}
+
+function savePresets() {
+  localStorage.setItem(PRESETS_KEY, JSON.stringify(presets.value))
+}
+
+const presets = ref<TimePreset[]>([])
+const showPresetForm = ref(false)
+const newPresetLabel = ref('')
+
+onMounted(() => {
+  const stored = loadPresets()
+  if (stored.length > 0) {
+    presets.value = stored
+  } else {
+    presets.value = [...DEFAULT_PRESETS]
+    savePresets()
+  }
+})
+
+function applyPreset(preset: TimePreset) {
+  startTime.value = preset.startTime
+  endTime.value = preset.endTime
+}
+
+function addPreset() {
+  const label = newPresetLabel.value.trim()
+  if (!label) return
+  presets.value.push({ label, startTime: startTime.value, endTime: endTime.value })
+  savePresets()
+  newPresetLabel.value = ''
+  showPresetForm.value = false
+}
+
+function deletePreset(index: number) {
+  presets.value.splice(index, 1)
+  savePresets()
+}
+
 // Request management
 const columns = [
   { key: 'date', label: 'Date' },
@@ -195,6 +256,25 @@ async function deleteRequest(id: number) {
                 <UCheckbox v-model="fullDay" label="Full day (6:00 AM - 12:00 AM)" />
               </div>
 
+              <!-- Preset chips -->
+              <div v-if="presets.length" class="flex flex-wrap gap-2 mb-3">
+                <div v-for="(preset, idx) in presets" :key="idx" class="flex items-center gap-0.5">
+                  <UButton
+                    size="xs"
+                    variant="soft"
+                    :label="`${preset.label} (${formatTimeRange(preset.startTime, preset.endTime)})`"
+                    @click="applyPreset(preset)"
+                  />
+                  <UButton
+                    icon="i-heroicons-x-mark"
+                    color="gray"
+                    variant="ghost"
+                    size="2xs"
+                    @click="deletePreset(idx)"
+                  />
+                </div>
+              </div>
+
               <div v-if="!fullDay" class="flex flex-col sm:flex-row gap-4">
                 <div>
                   <label class="block text-sm font-medium mb-1 text-gray-900 dark:text-gray-100">Start Time</label>
@@ -203,6 +283,29 @@ async function deleteRequest(id: number) {
                 <div>
                   <label class="block text-sm font-medium mb-1 text-gray-900 dark:text-gray-100">End Time</label>
                   <UInput v-model="endTime" type="time" />
+                </div>
+              </div>
+
+              <!-- Save as preset -->
+              <div class="mt-2">
+                <UButton
+                  v-if="!showPresetForm"
+                  size="xs"
+                  variant="ghost"
+                  icon="i-heroicons-bookmark"
+                  label="Save as preset"
+                  @click="showPresetForm = true"
+                />
+                <div v-else class="flex items-center gap-2">
+                  <UInput
+                    v-model="newPresetLabel"
+                    size="xs"
+                    placeholder="Preset name"
+                    class="w-40"
+                    @keyup.enter="addPreset"
+                  />
+                  <UButton size="xs" label="Save" @click="addPreset" />
+                  <UButton size="xs" variant="ghost" label="Cancel" @click="showPresetForm = false" />
                 </div>
               </div>
 
