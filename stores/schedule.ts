@@ -7,6 +7,7 @@ interface Schedule {
   slots: string
   startTime: string
   endTime: string
+  source: string
   createdAt: string
   updatedAt: string
 }
@@ -52,6 +53,15 @@ export const useScheduleStore = defineStore('schedule', () => {
       headers: { 'x-admin-pin': auth.pin },
     })
     await fetchSchedules()
+  }
+
+  async function syncPlanday() {
+    const result = await $fetch<{ success: boolean; synced: number; removed: number }>('/api/schedule/sync', {
+      method: 'POST',
+      headers: { 'x-admin-pin': auth.pin },
+    })
+    await fetchSchedules()
+    return result
   }
 
   async function removeOwnerDate(date: string) {
@@ -117,6 +127,7 @@ export const useScheduleStore = defineStore('schedule', () => {
     fetchSchedules,
     fetchRequests,
     addOwnerDates,
+    syncPlanday,
     removeOwnerDate,
     submitRequest,
     updateRequestStatus,

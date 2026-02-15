@@ -1,0 +1,1 @@
+ALTER TABLE `schedules` ADD `source` text DEFAULT 'manual' NOT NULL;

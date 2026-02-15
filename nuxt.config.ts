@@ -26,5 +26,8 @@ export default defineNuxtConfig({
 
   runtimeConfig: {
     adminPin: '3489',
+    plandayClientId: '',
+    plandayRefreshToken: '',
+    plandayEmployeeId: '',
   },
 })

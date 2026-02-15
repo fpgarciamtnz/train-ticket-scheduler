@@ -83,6 +83,23 @@ const HOUR_OPTIONS = Array.from({ length: 25 }, (_, i) => {
   return { label: formatTime(value), value }
 })
 
+// Planday sync
+const syncing = ref(false)
+const syncResult = ref('')
+
+async function syncFromPlanday() {
+  syncing.value = true
+  syncResult.value = ''
+  try {
+    const result = await schedule.syncPlanday()
+    syncResult.value = `Synced ${result.synced} shift${result.synced === 1 ? '' : 's'}, removed ${result.removed} stale entr${result.removed === 1 ? 'y' : 'ies'}`
+  } catch (e: any) {
+    syncResult.value = `Sync failed: ${e.data?.message || e.message || 'Unknown error'}`
+  } finally {
+    syncing.value = false
+  }
+}
+
 // Request management
 const columns = [
   { key: 'date', label: 'Date' },
@@ -111,6 +128,8 @@ async function submitPin() {
   }
   auth.login(pinInput.value)
   await Promise.all([schedule.fetchSchedules(), schedule.fetchRequests()])
+  // Fire-and-forget auto-sync from Planday
+  syncFromPlanday()
 }
 
 // Calendar attributes: blue for selected (unsaved), red for saved
@@ -233,6 +252,19 @@ async function deleteRequest(id: number) {
       <UTabs :items="tabItems">
         <template #schedule>
           <div class="space-y-6 pt-4">
+            <!-- Planday sync -->
+            <div class="flex items-center gap-3">
+              <UButton
+                icon="i-heroicons-arrow-path"
+                label="Sync from Planday"
+                :loading="syncing"
+                variant="soft"
+                color="violet"
+                @click="syncFromPlanday"
+              />
+              <span v-if="syncResult" class="text-sm text-gray-600 dark:text-gray-400">{{ syncResult }}</span>
+            </div>
+
             <!-- Calendar for multi-date selection -->
             <div>
               <h3 class="font-medium mb-2 text-gray-900 dark:text-gray-100">Click dates on the calendar to select them</h3>
@@ -253,7 +285,7 @@ async function deleteRequest(id: number) {
                 </template>
               </ClientOnly>
               <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                Blue = selected (unsaved) &middot; Red = already scheduled
+                Blue = selected (unsaved) &middot; Red = scheduled
               </p>
             </div>
 
@@ -344,6 +376,9 @@ async function deleteRequest(id: number) {
                     <span class="text-sm font-mono text-gray-900 dark:text-gray-100">{{ entry.date }}</span>
                     <UBadge color="red" variant="subtle" size="xs">
                       {{ formatTimeRange(entry.startTime, entry.endTime) }}
+                    </UBadge>
+                    <UBadge v-if="entry.source === 'planday'" color="violet" variant="subtle" size="xs">
+                      Planday
                     </UBadge>
                   </div>
                   <UButton
