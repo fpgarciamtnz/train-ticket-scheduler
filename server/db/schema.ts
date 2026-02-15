@@ -17,6 +17,7 @@ export const requests = sqliteTable('requests', {
   status: text('status', { enum: ['pending', 'approved', 'rejected'] }).notNull().default('pending'),
   note: text('note'),
   duration: text('duration').notNull().default('8h'),
+  startTime: text('start_time'),
   slots: text('slots'), // nullable CSV: 'morning,midday', etc.
   createdAt: text('created_at').notNull().$defaultFn(() => new Date().toISOString()),
   updatedAt: text('updated_at').notNull().$defaultFn(() => new Date().toISOString()),

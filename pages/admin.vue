@@ -18,6 +18,7 @@ const columns = [
   { key: 'requesterName', label: 'Name' },
   { key: 'requesterContact', label: 'Contact' },
   { key: 'duration', label: 'Duration' },
+  { key: 'startTime', label: 'Start Time' },
   { key: 'slots', label: 'Slots' },
   { key: 'status', label: 'Status' },
   { key: 'note', label: 'Note' },
@@ -222,6 +223,9 @@ function formatSlotBadges(slots: string | null): string[] {
             <UTable :rows="schedule.requests" :columns="columns">
               <template #duration-data="{ row }">
                 <UBadge color="gray" variant="subtle" size="sm">{{ row.duration || '8h' }}</UBadge>
+              </template>
+              <template #startTime-data="{ row }">
+                <span class="text-sm">{{ row.startTime || '—' }}</span>
               </template>
               <template #slots-data="{ row }">
                 <div class="flex flex-wrap gap-1">

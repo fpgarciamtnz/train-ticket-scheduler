@@ -17,6 +17,7 @@ interface TicketRequest {
   status: 'pending' | 'approved' | 'rejected'
   note: string | null
   duration: string
+  startTime: string | null
   slots: string | null
   createdAt: string
   updatedAt: string
@@ -65,6 +66,7 @@ export const useScheduleStore = defineStore('schedule', () => {
     requesterContact: string
     note?: string
     duration?: Duration
+    startTime?: string
   }) {
     const result = await $fetch('/api/requests', {
       method: 'POST',

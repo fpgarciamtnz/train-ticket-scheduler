@@ -15,6 +15,13 @@
       "when": 1771109583073,
       "tag": "0001_moaning_sabretooth",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1771176476931,
+      "tag": "0002_lucky_ma_gnuci",
+      "breakpoints": true
     }
   ]
 }

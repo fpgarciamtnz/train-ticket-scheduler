@@ -10,6 +10,7 @@ export default defineEventHandler(async (event) => {
     requesterContact: string
     note?: string
     duration?: string
+    startTime?: string
   }>(event)
 
   if (!body.date || !body.requesterName || !body.requesterContact) {
@@ -34,6 +35,7 @@ export default defineEventHandler(async (event) => {
     requesterContact: body.requesterContact,
     note: body.note ?? null,
     duration,
+    startTime: body.startTime ?? null,
     slots: null,
     status: 'pending',
     createdAt: now,

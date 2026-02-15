@@ -15,6 +15,7 @@ const requesterName = ref('')
 const requesterContact = ref('')
 const note = ref('')
 const duration = ref<Duration>('8h')
+const startTime = ref('')
 const submitting = ref(false)
 const error = ref('')
 
@@ -40,12 +41,14 @@ async function submit() {
       requesterContact: requesterContact.value,
       note: note.value || undefined,
       duration: duration.value,
+      startTime: startTime.value || undefined,
     })
     selectedDate.value = null
     requesterName.value = ''
     requesterContact.value = ''
     note.value = ''
     duration.value = '8h'
+    startTime.value = ''
     emit('submitted')
     modelValue.value = false
   } catch (e: any) {
@@ -91,6 +94,12 @@ async function submit() {
               @click="duration = opt.value as Duration"
             />
           </div>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium mb-1 text-gray-900 dark:text-gray-100">Preferred Start Time (optional)</label>
+          <UInput v-model="startTime" placeholder="e.g. 9:00 AM" />
+          <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Use AM/PM format (e.g. 9:00 AM, 2:30 PM)</p>
         </div>
 
         <div>
