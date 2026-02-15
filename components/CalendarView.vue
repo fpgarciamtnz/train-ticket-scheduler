@@ -1,6 +1,10 @@
 <script setup lang="ts">
 import { format } from 'date-fns'
 
+const emit = defineEmits<{
+  submitted: []
+}>()
+
 const { attributes } = useCalendarAttributes()
 const selectedDate = ref<string | null>(null)
 
@@ -34,7 +38,7 @@ function onDayClick(day: any) {
     </p>
 
     <div v-if="selectedDate" class="mt-4">
-      <DaySlotDetail :date="selectedDate" />
+      <DaySlotDetail :date="selectedDate" @submitted="emit('submitted')" />
     </div>
   </div>
 </template>

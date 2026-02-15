@@ -16,7 +16,7 @@ await useAsyncData('schedule', () => Promise.all([
     </div>
 
     <div class="grid md:grid-cols-[1fr_280px] gap-6">
-      <CalendarView />
+      <CalendarView @submitted="schedule.fetchRequests()" />
 
       <div class="space-y-3">
         <h2 class="font-semibold text-sm uppercase tracking-wide text-gray-500 dark:text-gray-400">Legend</h2>
