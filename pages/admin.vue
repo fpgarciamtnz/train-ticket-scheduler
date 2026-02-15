@@ -60,6 +60,7 @@ onMounted(() => {
 function applyPreset(preset: TimePreset) {
   startTime.value = preset.startTime
   endTime.value = preset.endTime
+  fullDay.value = isFullDay(preset.startTime, preset.endTime)
 }
 
 function addPreset() {
@@ -160,7 +161,9 @@ watch(fullDay, (val) => {
 })
 
 watch([startTime, endTime], () => {
-  fullDay.value = isFullDay(startTime.value, endTime.value)
+  if (fullDay.value && !isFullDay(startTime.value, endTime.value)) {
+    fullDay.value = false
+  }
 })
 
 async function saveForSelectedDates() {
