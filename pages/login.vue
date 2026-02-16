@@ -42,7 +42,7 @@ async function submit() {
 <template>
   <div class="max-w-sm mx-auto mt-12">
     <h1 class="text-2xl font-bold mb-6 text-center">
-      {{ mode === 'login' ? 'Log in' : 'Create Account' }}
+      {{ mode === 'login' ? 'Owner Login' : 'Create Owner Account' }}
     </h1>
 
     <form class="space-y-4" @submit.prevent="submit">

@@ -3,15 +3,20 @@ const colorMode = useColorMode()
 const auth = useAuthStore()
 
 const navLinks = computed(() => {
+  const links = [
+    { label: 'Home', icon: 'i-heroicons-calendar-days', to: '/' },
+  ]
   if (auth.isAuthenticated && auth.user) {
-    return [
+    links.push(
       { label: 'Dashboard', icon: 'i-heroicons-squares-2x2', to: '/dashboard' },
       { label: 'My Calendar', icon: 'i-heroicons-calendar-days', to: `/u/${auth.user.slug}` },
-    ]
+    )
+  } else {
+    links.push(
+      { label: 'Log in', icon: 'i-heroicons-shield-check', to: '/login' },
+    )
   }
-  return [
-    { label: 'Log in', icon: 'i-heroicons-arrow-right-on-rectangle', to: '/login' },
-  ]
+  return links
 })
 
 function toggleColorMode() {
