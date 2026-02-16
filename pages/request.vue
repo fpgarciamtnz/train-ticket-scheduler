@@ -79,7 +79,7 @@ function resetForm() {
     <form v-else class="space-y-5" @submit.prevent="submit">
       <div>
         <label class="block text-sm font-medium mb-2 text-gray-900 dark:text-gray-100">Select a Date</label>
-        <p class="text-xs text-gray-500 dark:text-gray-400 mb-2">Red dates are unavailable (owner is using the ticket). Light red = partial day (some slots available).</p>
+        <p class="text-xs text-gray-500 dark:text-gray-400 mb-2">Red dates are unavailable (owner is using the ticket). Red outline = partial day (some slots available).</p>
         <ClientOnly>
           <VDatePicker
             v-model="selectedDate"
@@ -114,7 +114,7 @@ function resetForm() {
       <div>
         <label class="block text-sm font-medium mb-1 text-gray-900 dark:text-gray-100">Preferred Start Time (optional)</label>
         <UInput v-model="startTime" placeholder="e.g. 9:00 AM" />
-        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Use AM/PM format (e.g. 9:00 AM, 2:30 PM)</p>
+        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Use 24-hour format (e.g. 09:00, 14:30)</p>
       </div>
 
       <div>

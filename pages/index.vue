@@ -26,7 +26,7 @@ await useAsyncData('schedule', () => Promise.all([
             <span>Owner using ticket (full day)</span>
           </div>
           <div class="flex items-center gap-2">
-            <span class="w-3 h-3 rounded-full bg-red-200 dark:bg-red-900/40" />
+            <span class="w-3 h-3 rounded-full border-2 border-red-500" />
             <span>Owner using ticket (partial day)</span>
           </div>
           <div class="flex items-center gap-2">

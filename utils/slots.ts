@@ -10,9 +10,9 @@ export const DURATION_OPTIONS = [
 export type Duration = '4h' | '8h' | '12h' | '24h'
 
 export const SLOT_LABELS: Record<TimeSlot, string> = {
-  morning: 'Morning (6am\u201312pm)',
-  midday: 'Midday (12pm\u20136pm)',
-  evening: 'Evening (6pm\u201312am)',
+  morning: 'Morning (06:00\u201312:00)',
+  midday: 'Midday (12:00\u201318:00)',
+  evening: 'Evening (18:00\u201300:00)',
 }
 
 export const SLOT_ICONS: Record<TimeSlot, string> = {
@@ -43,16 +43,13 @@ export function timeToMinutes(hhmm: string): number {
   return h * 60 + (m || 0)
 }
 
-/** Format "HH:mm" → "6 AM" (hours only, no minutes) */
+/** Format "HH:mm" → "06:00" (24-hour format) */
 export function formatTime(hhmm: string): string {
   const [h, m] = hhmm.split(':').map(Number)
-  if (h === 24 && m === 0) return '12 AM'
-  const suffix = h >= 12 && h < 24 ? 'PM' : 'AM'
-  const h12 = h === 0 ? 12 : h > 12 ? h - 12 : h
-  return `${h12} ${suffix}`
+  return `${String(h).padStart(2, '0')}:${String(m || 0).padStart(2, '0')}`
 }
 
-/** Format a start/end pair → "6 AM - 12 PM" */
+/** Format a start/end pair → "06:00 - 12:00" */
 export function formatTimeRange(start: string, end: string): string {
   return `${formatTime(start)} - ${formatTime(end)}`
 }

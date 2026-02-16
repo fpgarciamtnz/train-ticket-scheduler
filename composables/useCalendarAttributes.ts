@@ -13,7 +13,7 @@ export function useCalendarAttributes() {
         key: `owner-${s.date}`,
         highlight: {
           color: 'red',
-          fillMode: full ? 'solid' : 'light',
+          fillMode: full ? 'solid' : 'outline',
         },
         dates: new Date(s.date + 'T00:00:00'),
       })

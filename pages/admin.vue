@@ -184,7 +184,7 @@ const calendarAttributes = computed(() => {
     const full = isFullDay(s.startTime, s.endTime)
     attrs.push({
       key: `owner-${s.date}`,
-      highlight: { color: 'red', fillMode: full ? 'solid' : 'light' },
+      highlight: { color: 'red', fillMode: full ? 'solid' : 'outline' },
       dates: new Date(s.date + 'T00:00:00'),
     })
   }
@@ -326,7 +326,7 @@ async function deleteRequest(id: number) {
               <h3 class="font-medium mb-2 text-gray-900 dark:text-gray-100">Time range for selected dates</h3>
 
               <div class="flex items-center gap-2 mb-3">
-                <UCheckbox v-model="fullDay" label="Full day (6 AM - 12 AM)" />
+                <UCheckbox v-model="fullDay" label="Full day (06:00 - 24:00)" />
               </div>
 
               <!-- Preset chips -->

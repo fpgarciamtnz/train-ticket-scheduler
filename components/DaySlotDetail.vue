@@ -167,7 +167,7 @@ async function submit() {
         <div>
           <label class="block text-sm font-medium mb-1 text-gray-900 dark:text-gray-100">Preferred Start Time (optional)</label>
           <UInput v-model="startTime" placeholder="e.g. 9:00 AM" />
-          <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Use AM/PM format (e.g. 9:00 AM, 2:30 PM)</p>
+          <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Use 24-hour format (e.g. 09:00, 14:30)</p>
         </div>
 
         <div>
