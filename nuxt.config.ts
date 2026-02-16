@@ -10,6 +10,7 @@ export default defineNuxtConfig({
     '@nuxt/icon',
     '@nuxthub/core',
     'nitro-cloudflare-dev',
+    'nuxt-auth-utils',
   ],
 
   hub: {
@@ -25,7 +26,6 @@ export default defineNuxtConfig({
   },
 
   runtimeConfig: {
-    adminPin: '3489',
     plandayClientId: '',
     plandayRefreshToken: '',
     plandayEmployeeId: '',

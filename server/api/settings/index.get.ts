@@ -1,7 +1,7 @@
 import { settings } from '~~/server/db/schema'
 
 export default defineEventHandler(async (event) => {
-  requireAdmin(event)
+  await requireAuth(event)
 
   const rows = await db.select().from(settings)
   const result: Record<string, string> = {}

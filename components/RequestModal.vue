@@ -2,6 +2,10 @@
 import { format } from 'date-fns'
 import { isFullDay, DURATION_OPTIONS, type Duration } from '~/utils/slots'
 
+const props = defineProps<{
+  userId: number
+}>()
+
 const modelValue = defineModel<boolean>({ default: false })
 
 const emit = defineEmits<{
@@ -36,6 +40,7 @@ async function submit() {
 
   try {
     await schedule.submitRequest({
+      userId: props.userId,
       date: format(selectedDate.value, 'yyyy-MM-dd'),
       requesterName: requesterName.value,
       requesterContact: requesterContact.value,

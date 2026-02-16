@@ -2,6 +2,7 @@ import { isFullDay, type Duration } from '~/utils/slots'
 
 interface Schedule {
   id: number
+  userId: number | null
   date: string
   ownerStatus: string
   slots: string
@@ -14,6 +15,7 @@ interface Schedule {
 
 interface TicketRequest {
   id: number
+  userId: number | null
   date: string
   requesterName: string
   requesterContact: string
@@ -40,41 +42,43 @@ export const useScheduleStore = defineStore('schedule', () => {
   const pendingRequests = computed(() => requests.value.filter((r) => r.status === 'pending'))
   const approvedRequests = computed(() => requests.value.filter((r) => r.status === 'approved'))
 
-  async function fetchSchedules() {
-    ownerDates.value = await $fetch<Schedule[]>('/api/schedule')
+  async function fetchSchedules(userId: number) {
+    ownerDates.value = await $fetch<Schedule[]>('/api/schedule', {
+      query: { userId },
+    })
   }
 
-  async function fetchRequests() {
-    requests.value = await $fetch<TicketRequest[]>('/api/requests')
+  async function fetchRequests(userId: number) {
+    requests.value = await $fetch<TicketRequest[]>('/api/requests', {
+      query: { userId },
+    })
   }
 
   async function addOwnerDates(dates: Array<{ date: string, startTime: string, endTime: string }>) {
     await $fetch('/api/schedule', {
       method: 'POST',
       body: { dates },
-      headers: { 'x-admin-pin': auth.pin },
     })
-    await fetchSchedules()
+    if (auth.user) await fetchSchedules(auth.user.id)
   }
 
   async function syncPlanday() {
     const result = await $fetch<{ success: boolean; synced: number; removed: number }>('/api/schedule/sync', {
       method: 'POST',
-      headers: { 'x-admin-pin': auth.pin },
     })
-    await fetchSchedules()
+    if (auth.user) await fetchSchedules(auth.user.id)
     return result
   }
 
   async function removeOwnerDate(date: string) {
     await $fetch(`/api/schedule/${date}`, {
       method: 'DELETE',
-      headers: { 'x-admin-pin': auth.pin },
     })
-    await fetchSchedules()
+    if (auth.user) await fetchSchedules(auth.user.id)
   }
 
   async function submitRequest(data: {
+    userId: number
     date: string
     requesterName: string
     requesterContact: string
@@ -87,7 +91,7 @@ export const useScheduleStore = defineStore('schedule', () => {
       method: 'POST',
       body: data,
     })
-    await fetchRequests()
+    await fetchRequests(data.userId)
     return result
   }
 
@@ -95,17 +99,15 @@ export const useScheduleStore = defineStore('schedule', () => {
     await $fetch(`/api/requests/${id}`, {
       method: 'PATCH',
       body: { status },
-      headers: { 'x-admin-pin': auth.pin },
     })
-    await fetchRequests()
+    if (auth.user) await fetchRequests(auth.user.id)
   }
 
   async function deleteRequest(id: number) {
     await $fetch(`/api/requests/${id}`, {
       method: 'DELETE',
-      headers: { 'x-admin-pin': auth.pin },
     })
-    await fetchRequests()
+    if (auth.user) await fetchRequests(auth.user.id)
   }
 
   function getOwnerTimeRange(date: string): { startTime: string, endTime: string } | null {

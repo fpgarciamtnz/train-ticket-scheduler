@@ -3,7 +3,7 @@ import { format, addDays } from 'date-fns'
 import { schedules } from '~~/server/db/schema'
 
 export default defineEventHandler(async (event) => {
-  requireAdmin(event)
+  const user = await requireAuth(event)
 
   const today = format(new Date(), 'yyyy-MM-dd')
   const until = format(addDays(new Date(), 30), 'yyyy-MM-dd')
@@ -17,7 +17,9 @@ export default defineEventHandler(async (event) => {
     const { date, startTime, endTime } = parseShiftTimes(shift)
     syncedDates.push(date)
 
-    const existing = await db.select().from(schedules).where(eq(schedules.date, date)).get()
+    const existing = await db.select().from(schedules)
+      .where(and(eq(schedules.userId, user.id), eq(schedules.date, date)))
+      .get()
 
     if (existing) {
       await db.update(schedules).set({
@@ -25,9 +27,10 @@ export default defineEventHandler(async (event) => {
         endTime,
         source: 'planday',
         updatedAt: now,
-      }).where(eq(schedules.date, date))
+      }).where(eq(schedules.id, existing.id))
     } else {
       await db.insert(schedules).values({
+        userId: user.id,
         date,
         ownerStatus: 'using',
         startTime,
@@ -46,6 +49,7 @@ export default defineEventHandler(async (event) => {
     .from(schedules)
     .where(
       and(
+        eq(schedules.userId, user.id),
         eq(schedules.source, 'planday'),
         gte(schedules.date, today),
         lte(schedules.date, until),

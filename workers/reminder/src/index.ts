@@ -17,11 +17,7 @@ interface RequestRow {
   start_time: string | null
   reminder_sent: number
   schedule_start_time: string | null
-}
-
-interface SettingRow {
-  key: string
-  value: string
+  owner_email: string
 }
 
 async function sendEmail(env: Env, to: string | string[], subject: string, html: string) {
@@ -49,17 +45,13 @@ export default {
 
     const todayStr = now.toISOString().slice(0, 10) // YYYY-MM-DD
 
-    // Get admin email
-    const adminSetting = await env.DB.prepare(
-      `SELECT value FROM settings WHERE key = 'admin_email'`
-    ).first<SettingRow>()
-    const adminEmail = adminSetting?.value
-
     // Get approved requests for today that haven't had reminders sent
+    // Join with users table to get owner email, and schedules for start time
     const { results } = await env.DB.prepare(`
-      SELECT r.*, s.start_time as schedule_start_time
+      SELECT r.*, s.start_time as schedule_start_time, u.email as owner_email
       FROM requests r
-      LEFT JOIN schedules s ON r.date = s.date
+      LEFT JOIN schedules s ON r.date = s.date AND r.user_id = s.user_id
+      INNER JOIN users u ON r.user_id = u.id
       WHERE r.status = 'approved'
         AND r.reminder_sent = 0
         AND r.date = ?
@@ -80,7 +72,7 @@ export default {
       if (minutesUntilStart < 55 || minutesUntilStart > 65) continue
 
       const recipients: string[] = []
-      if (adminEmail) recipients.push(adminEmail)
+      if (req.owner_email) recipients.push(req.owner_email)
       if (req.requester_email) recipients.push(req.requester_email)
 
       if (recipients.length === 0) continue

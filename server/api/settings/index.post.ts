@@ -2,7 +2,7 @@ import { eq } from 'drizzle-orm'
 import { settings } from '~~/server/db/schema'
 
 export default defineEventHandler(async (event) => {
-  requireAdmin(event)
+  await requireAuth(event)
 
   const body = await readBody<{ key: string; value: string }>(event)
   if (!body.key || typeof body.value !== 'string') {

@@ -1,8 +1,19 @@
-import { sqliteTable, text, integer } from 'drizzle-orm/sqlite-core'
+import { sqliteTable, text, integer, uniqueIndex } from 'drizzle-orm/sqlite-core'
+
+export const users = sqliteTable('users', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  email: text('email').notNull().unique(),
+  pin: text('pin').notNull(),
+  name: text('name').notNull(),
+  slug: text('slug').notNull().unique(),
+  createdAt: text('created_at').notNull().$defaultFn(() => new Date().toISOString()),
+  updatedAt: text('updated_at').notNull().$defaultFn(() => new Date().toISOString()),
+})
 
 export const schedules = sqliteTable('schedules', {
   id: integer('id').primaryKey({ autoIncrement: true }),
-  date: text('date').notNull().unique(), // YYYY-MM-DD
+  userId: integer('user_id').references(() => users.id),
+  date: text('date').notNull(), // YYYY-MM-DD
   ownerStatus: text('owner_status', { enum: ['using'] }).notNull().default('using'),
   slots: text('slots').notNull().default('morning,midday,evening'),
   startTime: text('start_time').notNull().default('06:00'),
@@ -10,10 +21,13 @@ export const schedules = sqliteTable('schedules', {
   source: text('source', { enum: ['manual', 'planday'] }).notNull().default('manual'),
   createdAt: text('created_at').notNull().$defaultFn(() => new Date().toISOString()),
   updatedAt: text('updated_at').notNull().$defaultFn(() => new Date().toISOString()),
-})
+}, (table) => [
+  uniqueIndex('schedules_user_date_idx').on(table.userId, table.date),
+])
 
 export const requests = sqliteTable('requests', {
   id: integer('id').primaryKey({ autoIncrement: true }),
+  userId: integer('user_id').references(() => users.id),
   date: text('date').notNull(), // YYYY-MM-DD
   requesterName: text('requester_name').notNull(),
   requesterContact: text('requester_contact').notNull(),

@@ -1,5 +1,5 @@
-import { eq } from 'drizzle-orm'
-import { schedules, requests, settings } from '~~/server/db/schema'
+import { eq, and } from 'drizzle-orm'
+import { schedules, requests, users } from '~~/server/db/schema'
 
 const VALID_DURATIONS = ['4h', '8h', '12h', '24h']
 
@@ -17,6 +17,7 @@ function isFullDayCheck(start: string | null, end: string | null): boolean {
 
 export default defineEventHandler(async (event) => {
   const body = await readBody<{
+    userId: number
     date: string
     requesterName: string
     requesterContact: string
@@ -26,8 +27,8 @@ export default defineEventHandler(async (event) => {
     startTime?: string
   }>(event)
 
-  if (!body.date || !body.requesterName || !body.requesterContact) {
-    throw createError({ statusCode: 400, statusMessage: 'date, requesterName, and requesterContact are required' })
+  if (!body.userId || !body.date || !body.requesterName || !body.requesterContact) {
+    throw createError({ statusCode: 400, statusMessage: 'userId, date, requesterName, and requesterContact are required' })
   }
 
   const duration = body.duration || '8h'
@@ -36,13 +37,16 @@ export default defineEventHandler(async (event) => {
   }
 
   // Block requests for fully-occupied dates
-  const ownerDate = await db.select().from(schedules).where(eq(schedules.date, body.date)).get()
+  const ownerDate = await db.select().from(schedules)
+    .where(and(eq(schedules.userId, body.userId), eq(schedules.date, body.date)))
+    .get()
   if (ownerDate && isFullDayCheck(ownerDate.startTime, ownerDate.endTime)) {
     throw createError({ statusCode: 409, statusMessage: 'This date is not available — the owner is using the ticket all day' })
   }
 
   const now = new Date().toISOString()
   const result = await db.insert(requests).values({
+    userId: body.userId,
     date: body.date,
     requesterName: body.requesterName,
     requesterContact: body.requesterContact,
@@ -57,13 +61,13 @@ export default defineEventHandler(async (event) => {
     updatedAt: now,
   }).returning()
 
-  // Send admin notification email (fire-and-forget)
+  // Send owner notification email (fire-and-forget)
   try {
-    const adminEmailSetting = await db.select().from(settings).where(eq(settings.key, 'admin_email')).get()
-    if (adminEmailSetting?.value) {
+    const owner = await db.select().from(users).where(eq(users.id, body.userId)).get()
+    if (owner?.email) {
       const req = result[0]
       await sendEmail(event, {
-        to: adminEmailSetting.value,
+        to: owner.email,
         subject: `New ticket request from ${req.requesterName} for ${req.date}`,
         html: `
           <h2>New Ticket Request</h2>
@@ -76,7 +80,7 @@ export default defineEventHandler(async (event) => {
             ${req.startTime ? `<tr><td style="padding:4px 12px 4px 0;font-weight:bold;">Start Time</td><td>${req.startTime}</td></tr>` : ''}
             ${req.note ? `<tr><td style="padding:4px 12px 4px 0;font-weight:bold;">Note</td><td>${req.note}</td></tr>` : ''}
           </table>
-          <p style="margin-top:16px;color:#666;">Log in to the admin panel to review this request.</p>
+          <p style="margin-top:16px;color:#666;">Log in to your dashboard to review this request.</p>
         `,
       })
     }

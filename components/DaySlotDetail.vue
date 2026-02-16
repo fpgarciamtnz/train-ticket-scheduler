@@ -4,6 +4,7 @@ import { formatTime, formatTimeRange, isFullDay, DURATION_OPTIONS, type Duration
 
 const props = defineProps<{
   date: string
+  userId: number
 }>()
 
 const emit = defineEmits<{
@@ -57,6 +58,7 @@ async function submit() {
 
   try {
     await schedule.submitRequest({
+      userId: props.userId,
       date: props.date,
       requesterName: requesterName.value,
       requesterContact: requesterContact.value,

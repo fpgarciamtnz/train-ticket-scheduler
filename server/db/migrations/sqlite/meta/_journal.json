@@ -43,6 +43,13 @@
       "when": 1771185603363,
       "tag": "0005_round_red_hulk",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1771264955614,
+      "tag": "0006_minor_runaways",
+      "breakpoints": true
     }
   ]
 }

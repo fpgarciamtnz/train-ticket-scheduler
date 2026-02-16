@@ -1,8 +1,8 @@
-import { eq } from 'drizzle-orm'
+import { eq, and } from 'drizzle-orm'
 import { requests } from '~~/server/db/schema'
 
 export default defineEventHandler(async (event) => {
-  requireAdmin(event)
+  const user = await requireAuth(event)
 
   const id = Number(getRouterParam(event, 'id'))
   if (!id || isNaN(id)) {
@@ -16,7 +16,7 @@ export default defineEventHandler(async (event) => {
 
   const result = await db.update(requests)
     .set({ status: body.status, updatedAt: new Date().toISOString() })
-    .where(eq(requests.id, id))
+    .where(and(eq(requests.id, id), eq(requests.userId, user.id)))
     .returning()
 
   if (result.length === 0) {

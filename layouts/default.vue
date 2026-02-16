@@ -1,14 +1,26 @@
 <script setup lang="ts">
 const colorMode = useColorMode()
+const auth = useAuthStore()
 
-const navLinks = [
-  { label: 'Calendar', icon: 'i-heroicons-calendar-days', to: '/' },
-  { label: 'Request', icon: 'i-heroicons-paper-airplane', to: '/request' },
-  { label: 'Admin', icon: 'i-heroicons-shield-check', to: '/admin' },
-]
+const navLinks = computed(() => {
+  if (auth.isAuthenticated && auth.user) {
+    return [
+      { label: 'Dashboard', icon: 'i-heroicons-squares-2x2', to: '/dashboard' },
+      { label: 'My Calendar', icon: 'i-heroicons-calendar-days', to: `/u/${auth.user.slug}` },
+    ]
+  }
+  return [
+    { label: 'Log in', icon: 'i-heroicons-arrow-right-on-rectangle', to: '/login' },
+  ]
+})
 
 function toggleColorMode() {
   colorMode.preference = colorMode.value === 'dark' ? 'light' : 'dark'
+}
+
+async function handleLogout() {
+  await auth.logout()
+  navigateTo('/')
 }
 </script>
 
@@ -27,6 +39,14 @@ function toggleColorMode() {
               :label="link.label"
               variant="ghost"
               size="sm"
+            />
+            <UButton
+              v-if="auth.isAuthenticated"
+              icon="i-heroicons-arrow-right-on-rectangle"
+              label="Logout"
+              variant="ghost"
+              size="sm"
+              @click="handleLogout"
             />
           </nav>
         </div>

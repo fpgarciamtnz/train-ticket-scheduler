@@ -1,10 +1,10 @@
-import { eq } from 'drizzle-orm'
+import { eq, and } from 'drizzle-orm'
 import { schedules } from '~~/server/db/schema'
 
 const TIME_RE = /^([01]\d|2[0-4]):00$/
 
 export default defineEventHandler(async (event) => {
-  requireAdmin(event)
+  const user = await requireAuth(event)
 
   const body = await readBody<{ dates: Array<{ date: string, startTime: string, endTime: string }> }>(event)
   if (!body.dates || !Array.isArray(body.dates) || body.dates.length === 0) {
@@ -21,16 +21,19 @@ export default defineEventHandler(async (event) => {
       throw createError({ statusCode: 400, statusMessage: 'startTime and endTime must be in HH:mm format' })
     }
 
-    const existing = await db.select().from(schedules).where(eq(schedules.date, entry.date)).get()
+    const existing = await db.select().from(schedules)
+      .where(and(eq(schedules.userId, user.id), eq(schedules.date, entry.date)))
+      .get()
 
     if (existing) {
       await db.update(schedules).set({
         startTime: entry.startTime,
         endTime: entry.endTime,
         updatedAt: now,
-      }).where(eq(schedules.date, entry.date))
+      }).where(eq(schedules.id, existing.id))
     } else {
       await db.insert(schedules).values({
+        userId: user.id,
         date: entry.date,
         ownerStatus: 'using',
         startTime: entry.startTime,
