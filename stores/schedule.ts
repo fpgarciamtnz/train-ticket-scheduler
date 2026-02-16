@@ -16,6 +16,7 @@ interface Schedule {
 interface Ticket {
   id: number
   zones: string
+  zoneLabels: string
   activationDate: string
   finishDate: string
 }
@@ -62,7 +63,7 @@ export const useScheduleStore = defineStore('schedule', () => {
     })
   }
 
-  async function saveTicket(data: { zones: string; activationDate: string; finishDate: string }) {
+  async function saveTicket(data: { zones: string; zoneLabels?: string; activationDate: string; finishDate: string }) {
     await $fetch('/api/ticket', {
       method: 'POST',
       body: data,

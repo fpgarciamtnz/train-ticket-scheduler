@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { format } from 'date-fns'
 import { formatTime, formatTimeRange, isFullDay } from '~/utils/slots'
-import { ZONES, parseZones, serializeZones, formatZones, type Zone } from '~/utils/zones'
+import { ZONES, parseZones, serializeZones, formatZones, parseZoneLabels, formatZoneWithLabel, type Zone, type ZoneLabels } from '~/utils/zones'
 
 definePageMeta({ middleware: 'auth' })
 
@@ -49,6 +49,7 @@ const newPresetLabel = ref('')
 
 // --- Ticket editing ---
 const ticketZones = ref<Zone[]>([])
+const ticketZoneLabelsMap = ref<ZoneLabels>({})
 const ticketActivationDate = ref('')
 const ticketFinishDate = ref('')
 const ticketSaving = ref(false)
@@ -59,6 +60,7 @@ function toggleZone(zone: Zone) {
   const idx = ticketZones.value.indexOf(zone)
   if (idx >= 0) {
     ticketZones.value.splice(idx, 1)
+    delete ticketZoneLabelsMap.value[zone]
   } else {
     ticketZones.value.push(zone)
   }
@@ -67,6 +69,7 @@ function toggleZone(zone: Zone) {
 function initTicket() {
   if (schedule.ticket) {
     ticketZones.value = parseZones(schedule.ticket.zones)
+    ticketZoneLabelsMap.value = parseZoneLabels(schedule.ticket.zoneLabels)
     ticketActivationDate.value = schedule.ticket.activationDate
     ticketFinishDate.value = schedule.ticket.finishDate
   }
@@ -93,6 +96,7 @@ async function saveTicket() {
   try {
     await schedule.saveTicket({
       zones: serializeZones(ticketZones.value),
+      zoneLabels: JSON.stringify(ticketZoneLabelsMap.value),
       activationDate: ticketActivationDate.value,
       finishDate: ticketFinishDate.value,
     })
@@ -337,7 +341,7 @@ async function deleteRequest(id: number) {
             <h3 class="font-medium text-gray-900 dark:text-gray-100 mb-2">Current Ticket</h3>
             <div class="flex flex-wrap gap-1 mb-2">
               <UBadge v-for="z in parseZones(schedule.ticket.zones)" :key="z" color="primary" variant="subtle">
-                Zone {{ z }}
+                Zone {{ formatZoneWithLabel(z, parseZoneLabels(schedule.ticket.zoneLabels)) }}
               </UBadge>
             </div>
             <p class="text-sm text-gray-600 dark:text-gray-400">
@@ -362,6 +366,18 @@ async function deleteRequest(id: number) {
                     size="sm"
                     @click="toggleZone(zone)"
                   />
+                </div>
+                <div v-if="ticketZones.length" class="mt-3 space-y-2">
+                  <div v-for="zone in ticketZones" :key="zone" class="flex items-center gap-2">
+                    <span class="text-sm font-medium text-gray-700 dark:text-gray-300 w-16">Zone {{ zone }}</span>
+                    <UInput
+                      :model-value="ticketZoneLabelsMap[zone] ?? ''"
+                      placeholder="e.g. Malmö"
+                      size="sm"
+                      class="flex-1"
+                      @update:model-value="(v: string) => ticketZoneLabelsMap[zone] = v"
+                    />
+                  </div>
                 </div>
               </div>
 

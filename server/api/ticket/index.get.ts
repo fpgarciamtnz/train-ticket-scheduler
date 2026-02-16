@@ -12,6 +12,7 @@ export default defineEventHandler(async (event) => {
   const ticket = await db.select({
     id: tickets.id,
     zones: tickets.zones,
+    zoneLabels: tickets.zoneLabels,
     activationDate: tickets.activationDate,
     finishDate: tickets.finishDate,
   }).from(tickets)

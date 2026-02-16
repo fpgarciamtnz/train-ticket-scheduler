@@ -1,0 +1,1 @@
+ALTER TABLE `tickets` ADD `zone_labels` text DEFAULT '{}' NOT NULL;

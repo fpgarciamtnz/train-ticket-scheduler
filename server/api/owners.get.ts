@@ -33,15 +33,17 @@ export default defineEventHandler(async () => {
   const allTickets = await db.select({
     userId: tickets.userId,
     zones: tickets.zones,
+    zoneLabels: tickets.zoneLabels,
     activationDate: tickets.activationDate,
     finishDate: tickets.finishDate,
   }).from(tickets).orderBy(desc(tickets.createdAt))
 
-  const ticketByUser = new Map<number, { zones: string; activationDate: string; finishDate: string }>()
+  const ticketByUser = new Map<number, { zones: string; zoneLabels: string; activationDate: string; finishDate: string }>()
   for (const t of allTickets) {
     if (!ticketByUser.has(t.userId)) {
       ticketByUser.set(t.userId, {
         zones: t.zones,
+        zoneLabels: t.zoneLabels,
         activationDate: t.activationDate,
         finishDate: t.finishDate,
       })

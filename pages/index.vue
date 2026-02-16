@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { formatTimeRange, isFullDay } from '~/utils/slots'
-import { formatZones } from '~/utils/zones'
+import { formatZones, parseZoneLabels, formatZoneWithLabel, type Zone } from '~/utils/zones'
 
 const { data: owners } = await useAsyncData('owners', () => $fetch('/api/owners'))
 
@@ -26,7 +26,7 @@ function formatDate(dateStr: string) {
             <h2 class="text-lg font-semibold">{{ owner.name }}</h2>
             <div v-if="owner.ticket" class="mt-1 flex flex-wrap items-center gap-1">
               <UBadge v-for="z in formatZones(owner.ticket.zones).split(', ')" :key="z" color="primary" variant="subtle" size="xs">
-                Zone {{ z }}
+                Zone {{ formatZoneWithLabel(z as Zone, parseZoneLabels(owner.ticket.zoneLabels)) }}
               </UBadge>
               <span class="text-xs text-gray-500 dark:text-gray-400 ml-1">
                 {{ owner.ticket.activationDate }} &mdash; {{ owner.ticket.finishDate }}

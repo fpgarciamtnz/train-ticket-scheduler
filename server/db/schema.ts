@@ -46,6 +46,7 @@ export const tickets = sqliteTable('tickets', {
   id: integer('id').primaryKey({ autoIncrement: true }),
   userId: integer('user_id').references(() => users.id).notNull(),
   zones: text('zones').notNull(),              // CSV: "A,B,C"
+  zoneLabels: text('zone_labels').notNull().default('{}'), // JSON: {"A":"Malmö","B":"Lund"}
   activationDate: text('activation_date').notNull(), // YYYY-MM-DD
   finishDate: text('finish_date').notNull(),         // YYYY-MM-DD
   createdAt: text('created_at').notNull().$defaultFn(() => new Date().toISOString()),

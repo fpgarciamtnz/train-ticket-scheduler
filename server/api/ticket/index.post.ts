@@ -4,7 +4,7 @@ import { tickets } from '~~/server/db/schema'
 export default defineEventHandler(async (event) => {
   const user = await requireAuth(event)
 
-  const body = await readBody<{ zones: string; activationDate: string; finishDate: string }>(event)
+  const body = await readBody<{ zones: string; zoneLabels?: string; activationDate: string; finishDate: string }>(event)
 
   if (!body.zones || body.zones.trim().length === 0) {
     throw createError({ statusCode: 400, statusMessage: 'At least one zone is required' })
@@ -28,6 +28,7 @@ export default defineEventHandler(async (event) => {
   if (existing) {
     await db.update(tickets).set({
       zones: body.zones,
+      zoneLabels: body.zoneLabels ?? '{}',
       activationDate: body.activationDate,
       finishDate: body.finishDate,
       updatedAt: now,
@@ -36,6 +37,7 @@ export default defineEventHandler(async (event) => {
     await db.insert(tickets).values({
       userId: user.id,
       zones: body.zones,
+      zoneLabels: body.zoneLabels ?? '{}',
       activationDate: body.activationDate,
       finishDate: body.finishDate,
       createdAt: now,
