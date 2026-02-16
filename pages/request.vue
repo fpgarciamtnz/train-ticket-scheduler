@@ -86,6 +86,7 @@ function resetForm() {
             :disabled-dates="disabledDates"
             :min-date="new Date()"
             :is-dark="{ selector: 'html', darkClass: 'dark' }"
+            :first-day-of-week="2"
             mode="date"
             expanded
           />

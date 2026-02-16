@@ -20,6 +20,7 @@ function onDayClick(day: any) {
       <VCalendar
         :attributes="attributes"
         :is-dark="{ selector: 'html', darkClass: 'dark' }"
+        :first-day-of-week="2"
         expanded
         borderless
         transparent

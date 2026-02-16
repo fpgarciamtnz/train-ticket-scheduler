@@ -304,6 +304,7 @@ async function deleteRequest(id: number) {
                 <VCalendar
                   :attributes="calendarAttributes"
                   :is-dark="{ selector: 'html', darkClass: 'dark' }"
+                  :first-day-of-week="2"
                   expanded
                   borderless
                   transparent
