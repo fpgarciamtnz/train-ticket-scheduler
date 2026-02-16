@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { format } from 'date-fns'
 import { formatTime, formatTimeRange, isFullDay } from '~/utils/slots'
+import { ZONES, parseZones, serializeZones, formatZones, type Zone } from '~/utils/zones'
 
 definePageMeta({ middleware: 'auth' })
 
@@ -45,6 +46,63 @@ function savePresets() {
 const presets = ref<TimePreset[]>([])
 const showPresetForm = ref(false)
 const newPresetLabel = ref('')
+
+// --- Ticket editing ---
+const ticketZones = ref<Zone[]>([])
+const ticketActivationDate = ref('')
+const ticketFinishDate = ref('')
+const ticketSaving = ref(false)
+const ticketSaved = ref(false)
+const ticketError = ref('')
+
+function toggleZone(zone: Zone) {
+  const idx = ticketZones.value.indexOf(zone)
+  if (idx >= 0) {
+    ticketZones.value.splice(idx, 1)
+  } else {
+    ticketZones.value.push(zone)
+  }
+}
+
+function initTicket() {
+  if (schedule.ticket) {
+    ticketZones.value = parseZones(schedule.ticket.zones)
+    ticketActivationDate.value = schedule.ticket.activationDate
+    ticketFinishDate.value = schedule.ticket.finishDate
+  }
+}
+
+async function saveTicket() {
+  ticketError.value = ''
+  ticketSaved.value = false
+
+  if (ticketZones.value.length === 0) {
+    ticketError.value = 'Select at least one zone'
+    return
+  }
+  if (!ticketActivationDate.value || !ticketFinishDate.value) {
+    ticketError.value = 'Both dates are required'
+    return
+  }
+  if (ticketFinishDate.value <= ticketActivationDate.value) {
+    ticketError.value = 'Finish date must be after activation date'
+    return
+  }
+
+  ticketSaving.value = true
+  try {
+    await schedule.saveTicket({
+      zones: serializeZones(ticketZones.value),
+      activationDate: ticketActivationDate.value,
+      finishDate: ticketFinishDate.value,
+    })
+    ticketSaved.value = true
+  } catch (e: any) {
+    ticketError.value = e.data?.message || e.message || 'Failed to save'
+  } finally {
+    ticketSaving.value = false
+  }
+}
 
 // --- Profile editing ---
 const profileName = ref('')
@@ -101,8 +159,13 @@ onMounted(async () => {
   }
 
   if (auth.user) {
-    await Promise.all([schedule.fetchSchedules(auth.user.id), schedule.fetchRequests(auth.user.id)])
+    await Promise.all([
+      schedule.fetchSchedules(auth.user.id),
+      schedule.fetchRequests(auth.user.id),
+      schedule.fetchTicket(auth.user.id),
+    ])
     initProfile()
+    initTicket()
     // Fire-and-forget auto-sync from Planday
     syncFromPlanday()
   }
@@ -164,6 +227,7 @@ const columns = [
 ]
 
 const tabItems = [
+  { label: 'My Ticket', slot: 'ticket', icon: 'i-heroicons-ticket' },
   { label: 'Schedule', slot: 'schedule', icon: 'i-heroicons-calendar-days' },
   { label: 'Requests', slot: 'requests', icon: 'i-heroicons-inbox' },
   { label: 'Profile', slot: 'profile', icon: 'i-heroicons-user-circle' },
@@ -266,6 +330,62 @@ async function deleteRequest(id: number) {
     <h1 class="text-2xl font-bold mb-6">Dashboard</h1>
 
     <UTabs :items="tabItems">
+      <template #ticket>
+        <div class="pt-4 max-w-md space-y-6">
+          <!-- Current ticket summary -->
+          <div v-if="schedule.ticket" class="p-4 rounded-lg bg-gray-50 dark:bg-gray-800">
+            <h3 class="font-medium text-gray-900 dark:text-gray-100 mb-2">Current Ticket</h3>
+            <div class="flex flex-wrap gap-1 mb-2">
+              <UBadge v-for="z in parseZones(schedule.ticket.zones)" :key="z" color="primary" variant="subtle">
+                Zone {{ z }}
+              </UBadge>
+            </div>
+            <p class="text-sm text-gray-600 dark:text-gray-400">
+              {{ schedule.ticket.activationDate }} &mdash; {{ schedule.ticket.finishDate }}
+            </p>
+          </div>
+
+          <!-- Ticket form -->
+          <div>
+            <h3 class="font-medium text-gray-900 dark:text-gray-100 mb-3">{{ schedule.ticket ? 'Update' : 'Set up' }} your ticket</h3>
+
+            <div class="space-y-4">
+              <div>
+                <label class="block text-sm font-medium mb-2 text-gray-900 dark:text-gray-100">Zones</label>
+                <div class="flex flex-wrap gap-2">
+                  <UButton
+                    v-for="zone in ZONES"
+                    :key="zone"
+                    :label="zone"
+                    :color="ticketZones.includes(zone) ? 'primary' : 'gray'"
+                    :variant="ticketZones.includes(zone) ? 'solid' : 'outline'"
+                    size="sm"
+                    @click="toggleZone(zone)"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium mb-1 text-gray-900 dark:text-gray-100">Activation date</label>
+                <UInput v-model="ticketActivationDate" type="date" />
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium mb-1 text-gray-900 dark:text-gray-100">Finish date</label>
+                <UInput v-model="ticketFinishDate" type="date" />
+              </div>
+
+              <UAlert v-if="ticketError" color="red" variant="subtle" :title="ticketError" />
+
+              <div class="flex items-center gap-3">
+                <UButton label="Save" :loading="ticketSaving" @click="saveTicket" />
+                <span v-if="ticketSaved" class="text-sm text-green-600 dark:text-green-400">Saved!</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </template>
+
       <template #schedule>
         <div class="space-y-6 pt-4">
           <!-- Planday sync -->

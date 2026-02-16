@@ -42,6 +42,16 @@ export const requests = sqliteTable('requests', {
   updatedAt: text('updated_at').notNull().$defaultFn(() => new Date().toISOString()),
 })
 
+export const tickets = sqliteTable('tickets', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  userId: integer('user_id').references(() => users.id).notNull(),
+  zones: text('zones').notNull(),              // CSV: "A,B,C"
+  activationDate: text('activation_date').notNull(), // YYYY-MM-DD
+  finishDate: text('finish_date').notNull(),         // YYYY-MM-DD
+  createdAt: text('created_at').notNull().$defaultFn(() => new Date().toISOString()),
+  updatedAt: text('updated_at').notNull().$defaultFn(() => new Date().toISOString()),
+})
+
 export const settings = sqliteTable('settings', {
   key: text('key').primaryKey(),
   value: text('value').notNull(),

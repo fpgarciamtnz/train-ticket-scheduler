@@ -1,5 +1,5 @@
-import { eq } from 'drizzle-orm'
-import { users } from '~~/server/db/schema'
+import { eq, desc } from 'drizzle-orm'
+import { users, tickets } from '~~/server/db/schema'
 
 export default defineEventHandler(async (event) => {
   const query = getQuery(event)
@@ -19,5 +19,14 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 404, statusMessage: 'User not found' })
   }
 
-  return user
+  const ticket = await db.select({
+    zones: tickets.zones,
+    activationDate: tickets.activationDate,
+    finishDate: tickets.finishDate,
+  }).from(tickets)
+    .where(eq(tickets.userId, user.id))
+    .orderBy(desc(tickets.createdAt))
+    .get()
+
+  return { ...user, ticket: ticket ?? null }
 })

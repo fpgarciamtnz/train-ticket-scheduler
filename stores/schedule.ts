@@ -13,6 +13,13 @@ interface Schedule {
   updatedAt: string
 }
 
+interface Ticket {
+  id: number
+  zones: string
+  activationDate: string
+  finishDate: string
+}
+
 interface TicketRequest {
   id: number
   userId: number | null
@@ -35,6 +42,7 @@ export const useScheduleStore = defineStore('schedule', () => {
 
   const ownerDates = ref<Schedule[]>([])
   const requests = ref<TicketRequest[]>([])
+  const ticket = ref<Ticket | null>(null)
   const loading = ref(false)
 
   const ownerDateSet = computed(() => new Set(ownerDates.value.map((d) => d.date)))
@@ -46,6 +54,20 @@ export const useScheduleStore = defineStore('schedule', () => {
     ownerDates.value = await $fetch<Schedule[]>('/api/schedule', {
       query: { userId },
     })
+  }
+
+  async function fetchTicket(userId: number) {
+    ticket.value = await $fetch<Ticket | null>('/api/ticket', {
+      query: { userId },
+    })
+  }
+
+  async function saveTicket(data: { zones: string; activationDate: string; finishDate: string }) {
+    await $fetch('/api/ticket', {
+      method: 'POST',
+      body: data,
+    })
+    if (auth.user) await fetchTicket(auth.user.id)
   }
 
   async function fetchRequests(userId: number) {
@@ -125,11 +147,14 @@ export const useScheduleStore = defineStore('schedule', () => {
   return {
     ownerDates,
     requests,
+    ticket,
     loading,
     ownerDateSet,
     pendingRequests,
     approvedRequests,
     fetchSchedules,
+    fetchTicket,
+    saveTicket,
     fetchRequests,
     addOwnerDates,
     syncPlanday,

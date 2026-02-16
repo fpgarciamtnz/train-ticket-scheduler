@@ -1,14 +1,16 @@
 <script setup lang="ts">
+import { formatZones } from '~/utils/zones'
+
 const route = useRoute()
 const schedule = useScheduleStore()
 
 const slug = route.params.slug as string
-const calendarUser = ref<{ id: number; name: string; slug: string } | null>(null)
+const calendarUser = ref<{ id: number; name: string; slug: string; ticket: { zones: string; activationDate: string; finishDate: string } | null } | null>(null)
 const notFound = ref(false)
 const showRequestModal = ref(false)
 
 try {
-  const user = await $fetch<{ id: number; name: string; slug: string }>('/api/users/by-slug', {
+  const user = await $fetch<{ id: number; name: string; slug: string; ticket: { zones: string; activationDate: string; finishDate: string } | null }>('/api/users/by-slug', {
     query: { slug },
   })
   calendarUser.value = user
@@ -34,9 +36,18 @@ if (calendarUser.value) {
     </div>
 
     <div v-else-if="calendarUser">
-      <div class="flex items-center justify-between mb-6">
+      <div class="flex items-center justify-between mb-4">
         <h1 class="text-2xl font-bold">{{ calendarUser.name }}'s Ticket Calendar</h1>
         <UButton label="Request a Date" icon="i-heroicons-plus" @click="showRequestModal = true" />
+      </div>
+
+      <div v-if="calendarUser.ticket" class="mb-6 flex flex-wrap items-center gap-2 p-3 rounded-lg bg-gray-50 dark:bg-gray-800">
+        <UBadge v-for="z in formatZones(calendarUser.ticket.zones).split(', ')" :key="z" color="primary" variant="subtle" size="sm">
+          Zone {{ z }}
+        </UBadge>
+        <span class="text-sm text-gray-600 dark:text-gray-400">
+          Valid {{ calendarUser.ticket.activationDate }} &mdash; {{ calendarUser.ticket.finishDate }}
+        </span>
       </div>
 
       <div class="grid md:grid-cols-[1fr_280px] gap-6">
