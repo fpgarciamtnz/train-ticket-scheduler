@@ -13,7 +13,7 @@ function formatDate(dateStr: string) {
 <template>
   <div>
     <div class="mb-8 text-center">
-      <h1 class="text-3xl font-bold">Train Ticket Scheduler</h1>
+      <h1 class="text-3xl font-bold">Share My Skånetrafiken</h1>
       <p class="text-gray-600 dark:text-gray-400 mt-2">
         Browse ticket owners and their upcoming schedules.
       </p>

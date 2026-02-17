@@ -34,7 +34,7 @@ async function handleLogout() {
     <header class="border-b border-gray-200 dark:border-gray-800">
       <div class="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
         <div class="flex items-center gap-4">
-          <NuxtLink to="/" class="text-lg font-bold">Train Ticket</NuxtLink>
+          <NuxtLink to="/" class="text-lg font-bold">Share My Skånetrafiken</NuxtLink>
           <nav class="flex gap-2">
             <UButton
               v-for="link in navLinks"
@@ -69,7 +69,7 @@ async function handleLogout() {
     </main>
 
     <footer class="border-t border-gray-200 dark:border-gray-800 py-4 text-center text-sm text-gray-500 dark:text-gray-400">
-      Train Ticket Scheduler
+      Share My Skånetrafiken
     </footer>
   </div>
 </template>
